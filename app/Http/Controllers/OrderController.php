@@ -14,6 +14,7 @@ use Midtrans\Config;
 use Midtrans\CoreApi;
 use Illuminate\Support\Facades\Log;
 use App\Enums\OrderStatus;
+use Midtrans\Snap; // Add this import
 use Kreait\Firebase\Factory;
 use Kreait\Firebase\Database;
 
