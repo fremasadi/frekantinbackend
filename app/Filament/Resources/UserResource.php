@@ -9,8 +9,6 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Forms\Components\Select;
-
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -41,15 +39,9 @@ class UserResource extends Resource
                     ->maxLength(255),
                 Forms\Components\FileUpload::make('image')
                     ->image(),
-                    Select::make('role')
-                    ->label('Role')
-                    ->options([
-                        'admin' => 'Admin',
-                        'seller' => 'Seller',
-                        'customer' => 'Customer',
-                    ])
+                Forms\Components\TextInput::make('role')
                     ->required()
-                    ->placeholder('Pilih role')
+                    ->maxLength(255),
             ]);
     }
 
