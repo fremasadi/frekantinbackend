@@ -59,6 +59,9 @@ class ProductResource extends Resource
                     ->required()
                     ->numeric()
                     ->default(0),
+                Forms\Components\Toggle::make('status')
+                    ->label('Active') // Menampilkan status aktif atau tidak
+                    ->default(true),
             ]);
     }
 
@@ -84,6 +87,9 @@ class ProductResource extends Resource
                     Tables\Columns\TextColumn::make('stock')
                         ->numeric()
                         ->sortable(),
+                        Tables\Columns\IconColumn::make('status')
+                        ->label('Status')
+                        ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
