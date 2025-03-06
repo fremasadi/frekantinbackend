@@ -87,9 +87,9 @@ class ProductResource extends Resource
                     Tables\Columns\TextColumn::make('stock')
                         ->numeric()
                         ->sortable(),
-                        Tables\Columns\IconColumn::make('status')
+                        Tables\Columns\ToggleColumn::make('status')
                         ->label('Status')
-                        ->boolean(),
+                        ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
