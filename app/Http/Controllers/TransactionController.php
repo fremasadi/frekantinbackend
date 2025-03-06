@@ -148,8 +148,8 @@ class TransactionController extends Controller
 
             $message = CloudMessage::withTarget('token', $customer->fcm_token)
                 ->withNotification(Notification::create(
-                    'Pesanan Anda Selesai!',
-                    "Pesanan #{$order->id} telah diantar oleh penjual."
+                    'Makanan Anda Siap!',
+                    "Pesanan telah diantar oleh penjual."
                 ))
                 ->withData([
                     'order_id' => (string)$order->id,
