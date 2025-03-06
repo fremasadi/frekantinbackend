@@ -14,7 +14,6 @@ use Midtrans\Config;
 use Midtrans\CoreApi;
 use Illuminate\Support\Facades\Log;
 use App\Enums\OrderStatus;
-use Midtrans\Snap; // Add this import
 use Kreait\Firebase\Factory;
 use Kreait\Firebase\Database;
 
@@ -52,196 +51,156 @@ class OrderController extends Controller
     }
 
     public function createOrder(Request $request)
-    {
-        $user = $request->user();
-        $cart = Cart::where('customer_id', $user->id)->firstOrFail();
-        $cartItems = CartItem::where('cart_id', $cart->id)->get();
+{
+    $user = $request->user();
+    $cart = Cart::where('customer_id', $user->id)->firstOrFail();
+    $cartItems = CartItem::where('cart_id', $cart->id)->get();
 
-        if ($cartItems->isEmpty()) {
-            return response()->json(['status' => false, 'message' => 'Cart items not found'], 404);
+    if ($cartItems->isEmpty()) {
+        return response()->json(['status' => false, 'message' => 'Cart items not found'], 404);
+    }
+
+    $product = $cartItems->first()->product;
+    $sellerId = $product->seller_id;
+    $orderId = $this->generateOrderId();
+    $totalAmount = $this->calculateTotalAmount($cart->id);
+
+    DB::beginTransaction();
+
+    try {
+        $order = Order::create([
+            'customer_id' => $cart->customer_id,
+            'seller_id' => $sellerId,
+            'order_id' => $orderId,
+            'order_status' => OrderStatus::PENDING->value,
+            'total_amount' => $totalAmount,
+            'table_number' => $request->table_number,
+            'estimated_delivery_time' => Carbon::now()->addMinutes(30),
+        ]);
+
+        foreach ($cartItems as $item) {
+            OrderItem::create([
+                'order_id' => $order->id,
+                'product_id' => $item->product_id,
+                'quantity' => $item->quantity,
+                'price' => $item->product->price,
+                'notes' => $item->notes ?? '',
+            ]);
         }
 
-        $product = $cartItems->first()->product;
-        $sellerId = $product->seller_id;
-        $orderId = $this->generateOrderId();
-        $totalAmount = $this->calculateTotalAmount($cart->id);
-        $paymentType = $request->input('payment_type', 'BANK_TRANSFER');
-        $bank = $request->input('bank');
+        CartItem::where('cart_id', $cart->id)->delete();
 
-        DB::beginTransaction();
-
-        try {
-            // Validate payment method
-            $this->validatePaymentMethod($paymentType, $bank);
-
-            // Create Order
-            $order = Order::create([
+        $this->firebaseDatabase
+            ->getReference('notifications/orders')
+            ->push([
+                'order_id' => $orderId,
                 'customer_id' => $cart->customer_id,
                 'seller_id' => $sellerId,
-                'order_id' => $orderId,
-                'order_status' => OrderStatus::PENDING->value,
                 'total_amount' => $totalAmount,
-                'table_number' => $request->input('table_number'),
-                'estimated_delivery_time' => Carbon::now()->addMinutes(30),
+                'status' => OrderStatus::PENDING->value,
+                'timestamp' => Carbon::now()->timestamp,
             ]);
 
-            // Create Order Items
-            foreach ($cartItems as $item) {
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => $item->product_id,
-                    'quantity' => $item->quantity,
-                    'price' => $item->product->price,
-                    'notes' => $item->notes ?? '',
-                ]);
-            }
+        $paymentType = $request->payment_type;
+        $bank = $request->bank;
 
-            // Process Payment with Multiple Strategies
-            $paymentResponse = $this->processPaymentWithFallback(
-                $paymentType,
-                $totalAmount,
-                $orderId,
-                $bank
-            );
-
-            // Handle payment response errors
-            if (isset($paymentResponse['error'])) {
-                throw new \Exception($paymentResponse['error']);
-            }
-
-            // Create Payment Record
-            $payment = Payment::create([
-                'order_id' => $order->id,
-                'payment_status' => OrderStatus::PENDING->value,
-                'payment_type' => $paymentType,
-                'payment_gateway' => 'midtrans',
-                'payment_gateway_reference_id' => $orderId,
-                'payment_gateway_response' => json_encode($paymentResponse['response'] ?? []),
-                'gross_amount' => $totalAmount,
-                'payment_proof' => null,
-                'payment_date' => Carbon::now(),
-                'expired_at' => Carbon::now()->addHours(1),
-                'payment_va_name' => $paymentResponse['va_bank'] ?? null,
-                'payment_va_number' => $paymentResponse['va_number'] ?? null,
-            ]);
-
-            // Clear Cart
-            CartItem::where('cart_id', $cart->id)->delete();
-
-            DB::commit();
-
-            return response()->json([
-                'status' => true,
-                'message' => 'Order created successfully',
-                'order' => $order,
-                'payment' => $payment,
-                'va_details' => [
-                    'bank' => $paymentResponse['va_bank'],
-                    'number' => $paymentResponse['va_number']
-                ]
-            ], 200);
-
-        } catch (\Exception $e) {
-            DB::rollback();
-
-            Log::error('Order Creation Detailed Error', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'payment_type' => $paymentType,
-                'bank' => $bank,
-                'total_amount' => $totalAmount,
-                'order_id' => $orderId
-            ]);
-
-            return response()->json([
-                'status' => false,
-                'message' => 'Order creation failed',
-                'error_details' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    private function processPaymentWithFallback($paymentType, $totalAmount, $orderId, $bank)
-    {
-        $strategies = [
-            'coreApi' => [$this, 'processPaymentViaCoreApi'],
-            'snap' => [$this, 'processPaymentViaSnap']
-        ];
-
-        foreach ($strategies as $strategyName => $strategy) {
-            try {
-                Log::info("Attempting payment via $strategyName", [
-                    'order_id' => $orderId,
-                    'amount' => $totalAmount,
-                    'bank' => $bank
-                ]);
-
-                $result = call_user_func(
-                    $strategy,
-                    $paymentType,
-                    $totalAmount,
-                    $orderId,
-                    $bank
-                );
-
-                if ($result['va_bank'] && $result['va_number']) {
-                    return $result;
-                }
-            } catch (\Exception $e) {
-                Log::warning("Payment strategy $strategyName failed", [
-                    'error' => $e->getMessage()
-                ]);
-            }
+        if ($paymentType === 'BANK_TRANSFER' && !$bank) {
+            return response()->json(['status' => false, 'message' => 'Bank is required for bank transfer payment'], 400);
         }
 
-        throw new \Exception('All payment strategies failed. Unable to process payment.');
-    }
+        $paymentGatewayResponse = $this->processPayment($paymentType, $totalAmount, $orderId, $bank);
 
-    private function processPaymentViaCoreApi($paymentType, $totalAmount, $orderId, $bank)
-    {
-        $transaction_details = [
-            'order_id' => $orderId,
+        if (isset($paymentGatewayResponse['error'])) {
+            throw new \Exception($paymentGatewayResponse['error']);
+        }
+
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'payment_status' => OrderStatus::PENDING->value,
+            'payment_type' => $paymentType,
+            'payment_gateway' => 'midtrans',
+            'payment_gateway_reference_id' => $orderId,
+            'payment_gateway_response' => json_encode($paymentGatewayResponse['response']),
             'gross_amount' => $totalAmount,
-        ];
+            'payment_proof' => null,
+            'payment_date' => Carbon::now(),
+            'expired_at' => Carbon::now()->addHours(1),
+            'payment_va_name' => $paymentGatewayResponse['va_bank'],
+            'payment_va_number' => $paymentGatewayResponse['va_number'],
+        ]);
 
-        $item_details = [[
+        DB::commit();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Order created successfully',
+            'order' => $order,
+            'payment' => $payment,
+        ], 200);
+    } catch (\Exception $e) {
+        DB::rollback();
+        Log::error('Order creation failed: ' . $e->getMessage());
+        return response()->json([
+            'status' => false,
+            'message' => 'Error creating order or payment: ' . $e->getMessage(),
+        ], 500);
+    }
+}
+
+    private function processPayment($paymentType, $totalAmount, $orderId, $bank = null)
+{
+    $transaction_details = [
+        'order_id' => $orderId,
+        'gross_amount' => $totalAmount,
+    ];
+
+    $item_details = [
+        [
             'id' => 'item-1',
             'price' => $totalAmount,
             'quantity' => 1,
             'name' => 'Order #' . $orderId,
-        ]];
+        ]
+    ];
 
-        $customer_details = [
-            'first_name' => auth()->user()->name,
-            'email' => auth()->user()->email,
-            'phone' => auth()->user()->phone ?? 'N/A',
+    $customer_details = [
+        'first_name' => auth()->user()->name,
+        'email' => auth()->user()->email,
+        'phone' => auth()->user()->phone ?? 'N/A',
+    ];
+
+    // Add custom expiry
+    $custom_expiry = [
+        'expiry_duration' => 1, // Duration in hours
+        'unit' => 'hour', // Units can be 'minute', 'hour', or 'day'
+    ];
+
+    $transaction_data = [
+        'payment_type' => 'bank_transfer',
+        'transaction_details' => $transaction_details,
+        'item_details' => $item_details,
+        'customer_details' => $customer_details,
+        'custom_expiry' => $custom_expiry, // Add this line
+    ];
+
+    if ($paymentType === 'BANK_TRANSFER') {
+        $transaction_data['bank_transfer'] = [
+            'bank' => strtolower($bank)
         ];
+    }
 
-        $transaction_data = [
-            'payment_type' => 'bank_transfer',
-            'transaction_details' => $transaction_details,
-            'item_details' => $item_details,
-            'customer_details' => $customer_details,
-            'custom_expiry' => [
-                'expiry_duration' => 1,
-                'unit' => 'hour',
-            ],
-            'bank_transfer' => [
-                'bank' => strtolower($bank)
-            ]
-        ];
-
+    try {
         $response = CoreApi::charge($transaction_data);
 
         $result = [
             'response' => $response,
             'va_bank' => null,
-            'va_number' => null
+            'va_number' => null,
+            'redirect_url' => null
         ];
 
-        // VA Number Extraction Logic
         if ($response->payment_type === 'bank_transfer') {
-            if (isset($response->va_numbers[0]->bank) && isset($response->va_numbers[0]->va_number)) {
+            if (isset($response->va_numbers) && !empty($response->va_numbers)) {
                 $result['va_bank'] = $response->va_numbers[0]->bank;
                 $result['va_number'] = $response->va_numbers[0]->va_number;
             } elseif (isset($response->permata_va_number)) {
@@ -250,61 +209,12 @@ class OrderController extends Controller
             }
         }
 
-        if (!$result['va_bank'] || !$result['va_number']) {
-            throw new \Exception('Failed to generate VA number via CoreApi');
-        }
-
         return $result;
+    } catch (\Exception $e) {
+        Log::error('Midtrans payment processing failed: ' . $e->getMessage());
+        return ['error' => 'Payment processing failed: ' . $e->getMessage()];
     }
-
-    private function processPaymentViaSnap($paymentType, $totalAmount, $orderId, $bank)
-    {
-        $transaction_details = [
-            'order_id' => $orderId,
-            'gross_amount' => $totalAmount,
-        ];
-
-        $item_details = [[
-            'id' => 'item-1',
-            'price' => $totalAmount,
-            'quantity' => 1,
-            'name' => 'Order #' . $orderId,
-        ]];
-
-        $customer_details = [
-            'first_name' => auth()->user()->name,
-            'email' => auth()->user()->email,
-            'phone' => auth()->user()->phone ?? 'N/A',
-        ];
-
-        $transaction_data = [
-            'transaction_details' => $transaction_details,
-            'item_details' => $item_details,
-            'customer_details' => $customer_details,
-        ];
-
-        $snapToken = Snap::getSnapToken($transaction_data);
-
-        return [
-            'response' => $snapToken,
-            'va_bank' => $bank,
-            'va_number' => $snapToken
-        ];
-    }
-    private function validatePaymentMethod(string $paymentType, ?string $bank)
-    {
-        $allowedBanks = ['bni', 'bca', 'mandiri', 'permata'];
-
-        if ($paymentType === 'BANK_TRANSFER') {
-            if (!$bank) {
-                throw new \InvalidArgumentException('Bank is required for bank transfer');
-            }
-
-            if (!in_array(strtolower($bank), $allowedBanks)) {
-                throw new \InvalidArgumentException('Unsupported bank for transfer');
-            }
-        }
-    }
+}
 
 
     private function calculateTotalAmount($cartId)
@@ -312,9 +222,9 @@ class OrderController extends Controller
     $subtotal = CartItem::where('cart_id', $cartId)
         ->join('products', 'cart_items.product_id', '=', 'products.id')
         ->sum(DB::raw('products.price * cart_items.quantity'));
-
+    
     $serviceFee = 3000.00;
-
+    
     return number_format($subtotal + $serviceFee, 2, '.', '');
 }
 
