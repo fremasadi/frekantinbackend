@@ -49,16 +49,13 @@ class OrderResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('order_id')
-                    ->label('Invoice')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('customer.name')
-                    ->label('Customer')
-                    ->sortable()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('seller.name')
-                    ->label('Seller')
-                    ->sortable()
-                    ->searchable(),
+                Tables\Columns\TextColumn::make('customer_id')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('seller_id')
+                    ->numeric()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('order_status')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('total_amount')
@@ -66,21 +63,29 @@ class OrderResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('table_number')
                     ->searchable(),
-               
-                Tables\Columns\TextColumn::make('created_at')
+                Tables\Columns\TextColumn::make('estimated_delivery_time')
                     ->dateTime()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            
             ->filters([
                 //
             ])
-            ->defaultSort('created_at', 'desc'); // Urutkan secara descending berdasarkan `created_at`
-
+            ->actions([
+                Tables\Actions\EditAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
     }
 
     public static function getRelations(): array
@@ -94,8 +99,8 @@ class OrderResource extends Resource
     {
         return [
             'index' => Pages\ListOrders::route('/'),
-            // 'create' => Pages\CreateOrder::route('/create'),
-            // 'edit' => Pages\EditOrder::route('/{record}/edit'),
+            'create' => Pages\CreateOrder::route('/create'),
+            'edit' => Pages\EditOrder::route('/{record}/edit'),
         ];
     }
 }
