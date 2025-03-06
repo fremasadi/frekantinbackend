@@ -41,7 +41,7 @@ class PaymentCallbackController extends Controller
             // Siapkan pesan notifikasi
             $message = CloudMessage::withTarget('token', $seller->fcm_token)
                 ->withNotification(Notification::create(
-                    'Pesanan #{$order->order_id} telah dibayar',
+                    'Ada Pesanan baru nih telah dibayar',
                     "Mohon Segera Proses Dan Antar Ke meja"
                 ))
                 ->withData([

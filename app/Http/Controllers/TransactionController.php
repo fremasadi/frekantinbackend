@@ -5,9 +5,23 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use Illuminate\Support\Facades\Auth;
+use Kreait\Firebase\Factory;
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification;
+use Illuminate\Support\Facades\Log;
 
 class TransactionController extends Controller
 {
+    private $messaging;
+
+    public function __construct()
+    {
+        $firebase = (new Factory)
+            ->withServiceAccount(config('firebase.firebase.service_account'))
+            ->withDatabaseUri('https://fre-kantin-default-rtdb.firebaseio.com');
+        
+        $this->messaging = $firebase->createMessaging();
+    }
     /**
      * Menampilkan daftar transaksi seller yang login dengan status SUCCESS
      * Beserta daftar order items
@@ -89,12 +103,9 @@ class TransactionController extends Controller
         ], 200);
     }
 
-    /**
- * Update order_status menjadi COMPLETED
- */
     public function markAsCompleted($id)
     {
-        $sellerId = Auth::id(); // Ambil ID seller yang sedang login
+        $sellerId = auth()->id(); // Ambil ID seller yang sedang login
 
         // Cari order berdasarkan ID dan seller yang login
         $order = Order::where('id', $id)
@@ -112,11 +123,48 @@ class TransactionController extends Controller
         // Update order_status menjadi COMPLETED
         $order->update(['order_status' => 'COMPLETED']);
 
+        // Mengirim notifikasi ke customer
+        $this->sendNotificationToCustomer($order);
+
         return response()->json([
             'status' => true,
             'message' => 'Order has been marked as COMPLETED',
             'order' => $order
         ], 200);
+    }
+
+    /**
+     * Mengirim notifikasi ke customer menggunakan FCM
+     */
+    private function sendNotificationToCustomer($order)
+    {
+        try {
+            $customer = $order->customer;
+
+            if (!$customer || !$customer->fcm_token) {
+                Log::warning("Customer not found or FCM token not available for customer_id: {$order->customer_id}");
+                return;
+            }
+
+            $message = CloudMessage::withTarget('token', $customer->fcm_token)
+                ->withNotification(Notification::create(
+                    'Pesanan Anda Selesai!',
+                    "Pesanan #{$order->id} telah diantar oleh penjual."
+                ))
+                ->withData([
+                    'order_id' => (string)$order->id,
+                    'status' => 'COMPLETED',
+                    'type' => 'order_completed',
+                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK'
+                ]);
+
+            $this->messaging->send($message);
+
+            Log::info("Notification sent to customer {$customer->id} for order {$order->id}");
+
+        } catch (\Exception $e) {
+            Log::error("Error sending notification to customer: " . $e->getMessage());
+        }
     }
 
     public function getTransactionSummary()
