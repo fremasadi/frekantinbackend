@@ -26,7 +26,7 @@ class RevenueChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'Daily Revenue',
+                    'label' => 'Pendapatan Harian',
                     'data' => $revenue->pluck('total')->toArray(),
                     'borderColor' => '#4BC0C0',
                     'fill' => false,

@@ -1,6 +1,5 @@
 <?php
 
-
 // app/Filament/Widgets/OrdersChart.php
 namespace App\Filament\Widgets;
 
@@ -27,7 +26,7 @@ class OrdersChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'Daily Orders',
+                    'label' => 'Pesanan Harian',
                     'data' => $orders->pluck('count')->toArray(),
                     'borderColor' => '#36A2EB',
                     'fill' => false,

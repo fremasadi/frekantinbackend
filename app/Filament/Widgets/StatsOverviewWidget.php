@@ -25,28 +25,28 @@ class StatsOverviewWidget extends \Filament\Widgets\StatsOverviewWidget
         $completedOrders = Order::where('order_status', 'completed')->count();
 
         return [
-            Stat::make('Total Customers', $customerCount)
+            Stat::make('Total Pembeli', $customerCount)
                 ->description('Total registered customers')
                 ->icon('heroicon-o-users')
                 ->color('success'),
 
-            Stat::make('Total Sellers', $sellerCount)
+            Stat::make('Total Penjual', $sellerCount)
                 ->description('Total registered sellers')
                 ->icon('heroicon-o-shopping-bag')
                 ->color('success'),
 
-            Stat::make('Total Orders', $totalOrders)
-                ->description('All time orders')
+            Stat::make('Total Pesanan', $totalOrders)
+                ->description('Semua Pesanan')
                 ->icon('heroicon-o-shopping-cart')
                 ->color('primary'),
 
-            Stat::make('Total Revenue', 'Rp ' . number_format($totalRevenue, 0, ',', '.'))
-                ->description('All time revenue')
+            Stat::make('Total Pendapatan', 'Rp ' . number_format($totalRevenue, 0, ',', '.'))
+                ->description('Semua Pendapatan')
                 ->icon('heroicon-o-currency-dollar')
                 ->color('success'),
 
-            Stat::make('Average Order Value', 'Rp ' . number_format($averageOrderValue, 0, ',', '.'))
-                ->description('Average order amount')
+            Stat::make('Jumlah pesanan rata-rata', 'Rp ' . number_format($averageOrderValue, 0, ',', '.'))
+                ->description('Harga pesanan rata-rata')
                 ->icon('heroicon-o-calculator')
                 ->color('warning'),
 
