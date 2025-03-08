@@ -51,12 +51,14 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('order_id')
                     ->label('Reference Id')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('customer_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('customer.name') // Ambil nama customer dari relasi
+                    ->label('Nama Pembeli')
+                    ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('seller_id')
-                    ->numeric()
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('seller.name') // Ambil nama seller dari relasi
+                    ->label('Nama Penjual')
+                    ->searchable()
+                    ->sortable(),                
                 Tables\Columns\TextColumn::make('order_status')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('total_amount')
