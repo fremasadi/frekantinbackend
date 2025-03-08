@@ -66,9 +66,9 @@ class OrderResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('table_number')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('estimated_delivery_time')
-                    ->dateTime()
-                    ->sortable(),
+                // Tables\Columns\TextColumn::make('estimated_delivery_time')
+                //     ->dateTime()
+                //     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
