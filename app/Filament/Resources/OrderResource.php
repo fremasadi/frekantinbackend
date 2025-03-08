@@ -49,6 +49,7 @@ class OrderResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('order_id')
+                    ->label('Reference Id')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('customer_id')
                     ->numeric()

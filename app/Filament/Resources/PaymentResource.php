@@ -63,9 +63,10 @@ class PaymentResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('payment_status'),
                 Tables\Columns\TextColumn::make('payment_type'),
-                Tables\Columns\TextColumn::make('payment_gateway')
-                    ->searchable(),
+                // Tables\Columns\TextColumn::make('payment_gateway')
+                //     ->searchable(),
                 Tables\Columns\TextColumn::make('payment_gateway_reference_id')
+                    ->label('Reference Id')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('payment_va_name')
                     ->searchable(),
