@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 class RevenueChart extends ChartWidget
 {
-    protected static ?string $heading = 'Daily Revenue';
+    protected static ?string $heading = 'Pendapatan Harian';
     protected static ?int $sort = 3;
 
     protected function getData(): array

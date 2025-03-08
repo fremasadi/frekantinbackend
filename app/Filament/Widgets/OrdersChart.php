@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 class OrdersChart extends ChartWidget
 {
-    protected static ?string $heading = 'Orders Over Time';
+    protected static ?string $heading = 'Semua Pesanan';
     protected static ?int $sort = 2;
 
     protected function getData(): array
