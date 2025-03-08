@@ -26,17 +26,14 @@ class StatsOverviewWidget extends \Filament\Widgets\StatsOverviewWidget
 
         return [
             Stat::make('Total Pembeli', $customerCount)
-                ->description('Total registered customers')
                 ->icon('heroicon-o-users')
                 ->color('success'),
 
             Stat::make('Total Penjual', $sellerCount)
-                ->description('Total registered sellers')
                 ->icon('heroicon-o-shopping-bag')
                 ->color('success'),
 
             Stat::make('Total Pesanan', $totalOrders)
-                ->description('Semua Pesanan')
                 ->icon('heroicon-o-shopping-cart')
                 ->color('primary'),
 
