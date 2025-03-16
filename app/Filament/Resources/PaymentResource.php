@@ -77,8 +77,8 @@ class PaymentResource extends Resource
                 Tables\Columns\TextColumn::make('gross_amount')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('payment_proof')
-                    ->searchable(),
+                // Tables\Columns\TextColumn::make('payment_proof')
+                //     ->searchable(),
                 Tables\Columns\TextColumn::make('payment_date')
                     ->dateTime()
                     ->sortable(),
