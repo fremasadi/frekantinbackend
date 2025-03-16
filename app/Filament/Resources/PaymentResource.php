@@ -72,8 +72,8 @@ class PaymentResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('payment_va_number')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('payment_ewallet')
-                    ->searchable(),
+                // Tables\Columns\TextColumn::make('payment_ewallet')
+                //     ->searchable(),
                 Tables\Columns\TextColumn::make('gross_amount')
                     ->numeric()
                     ->sortable(),
