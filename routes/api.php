@@ -14,6 +14,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\PaymentCallbackController;
 use App\Http\Controllers\MidtransCallbackController;
+use App\Http\Controllers\ImageContentController;
 
 
 
@@ -121,5 +122,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Route::post('/midtrans/webhook', [PaymentWebhookController::class, 'handleWebhook']);
         // Route::post('midtrans/callback', [MidtransCallbackController::class, 'handle']);
+        Route::get('/image-contents', [ImageContentController::class, 'getActiveImages']);
+
     });
 });
