@@ -36,6 +36,8 @@ class TableNumberResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('number')
+                    ->label('Meja')
+                    ->formatStateUsing(fn ($state) => 'Meja ' . $state)
                     ->searchable(),
                 Tables\Columns\IconColumn::make('status')
                     ->boolean(),
