@@ -36,21 +36,25 @@ class ProductResource extends Resource
                     ->searchable()
                     ->required(),
                 Select::make('category_id')
-                    ->label('Category')
+                    ->label('Kategory')
                     ->options(Category::all()->pluck('name', 'id'))
                     ->searchable()
                     ->required(),
                 Forms\Components\TextInput::make('name')
+                    ->label('Nama Menu')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\Textarea::make('description')
+                    ->label('Deskripsi Menu')                        
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('price')
+                    ->label('Harga Menu')
                     ->required()
                     ->numeric()
                     ->prefix('$'),
                 Forms\Components\FileUpload::make('image')
+                    ->label('Gambar Menu')
                     ->image()
                     ->disk('public') // Gunakan disk 'public'
                     ->directory('product-images') // Simpan di folder 'category-images'
@@ -60,7 +64,7 @@ class ProductResource extends Resource
                     ->numeric()
                     ->default(0),
                 Forms\Components\Toggle::make('is_active')
-                    ->label('Active') // Menampilkan status aktif atau tidak
+                    ->label('Status') // Menampilkan status aktif atau tidak
                     ->default(true),
             ]);
     }
@@ -74,22 +78,24 @@ class ProductResource extends Resource
                 ->sortable()
                 ->searchable(),
                 Tables\Columns\TextColumn::make('category.name')
-                    ->label('Category')
+                    ->label('Nama Kategory')
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('name')
+                    ->label('Nama')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('price')
                     ->label('Harga')
                     ->formatStateUsing(fn ($state) => 'Rp.' . number_format($state, 0, ',', '.')) // Format ke IDR
                     ->sortable(),
-                Tables\Columns\ImageColumn::make('image'),
-                    Tables\Columns\TextColumn::make('stock')
-                        ->numeric()
-                        ->sortable(),
-                    Tables\Columns\ToggleColumn::make('is_active')
-                        ->label('Status')
-                        ->sortable(),
+                Tables\Columns\ImageColumn::make('image')
+                    ->label('Foto Makanan'),
+                Tables\Columns\TextColumn::make('stock')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\ToggleColumn::make('is_active')
+                    ->label('Status')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

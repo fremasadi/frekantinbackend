@@ -24,9 +24,11 @@ class CategoryResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
+                    ->label('Nama Kategori')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\FileUpload::make('image')
+                    ->label('Foto Kategori')
                     ->image()
                     ->disk('public') // Gunakan disk 'public'
                     ->directory('category-images') // Simpan di folder 'category-images'
@@ -39,8 +41,10 @@ class CategoryResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->label('Nama Kategori')
                     ->searchable(),
-                Tables\Columns\ImageColumn::make('image'),
+                Tables\Columns\ImageColumn::make('image')
+                    ->label('Foto Kategori'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

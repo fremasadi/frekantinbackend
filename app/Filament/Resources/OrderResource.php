@@ -60,11 +60,14 @@ class OrderResource extends Resource
                     ->searchable()
                     ->sortable(),                
                 Tables\Columns\TextColumn::make('order_status')
+                    ->label('Status')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('total_amount')
+                    ->label('Total Harga')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('table_number')
+                    ->label('Nomor Meja')
                     ->searchable(),
                 // Tables\Columns\TextColumn::make('estimated_delivery_time')
                 //     ->dateTime()

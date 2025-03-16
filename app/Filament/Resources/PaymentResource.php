@@ -64,27 +64,31 @@ class PaymentResource extends Resource
                 // Tables\Columns\TextColumn::make('order_id')
                 //     ->numeric()
                 //     ->sortable(),
-                Tables\Columns\TextColumn::make('payment_status'),
-                Tables\Columns\TextColumn::make('payment_type'),
+                Tables\Columns\TextColumn::make('payment_status')
+                    ->label('Status Pembayaran'),
+                // Tables\Columns\TextColumn::make('payment_type'),
                 // Tables\Columns\TextColumn::make('payment_gateway')
                 //     ->searchable(),
                 Tables\Columns\TextColumn::make('payment_va_name')
+                    ->label('Nama Bank')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('payment_va_number')
+                    ->label('Nomer Bank')
                     ->searchable(),
                 // Tables\Columns\TextColumn::make('payment_ewallet')
                 //     ->searchable(),
                 Tables\Columns\TextColumn::make('gross_amount')
+                    ->label('Total Pembayaran')
                     ->numeric()
                     ->sortable(),
                 // Tables\Columns\TextColumn::make('payment_proof')
                 //     ->searchable(),
-                Tables\Columns\TextColumn::make('payment_date')
-                    ->dateTime()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('expired_at')
-                    ->dateTime()
-                    ->sortable(),
+                // Tables\Columns\TextColumn::make('payment_date')
+                //     ->dateTime()
+                //     ->sortable(),
+                // Tables\Columns\TextColumn::make('expired_at')
+                //     ->dateTime()
+                //     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
