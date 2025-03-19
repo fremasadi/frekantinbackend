@@ -51,101 +51,115 @@ class OrderController extends Controller
     }
 
     public function createOrder(Request $request)
-{
-    $user = $request->user();
-    $cart = Cart::where('customer_id', $user->id)->firstOrFail();
-    $cartItems = CartItem::where('cart_id', $cart->id)->get();
-
-    if ($cartItems->isEmpty()) {
-        return response()->json(['status' => false, 'message' => 'Cart items not found'], 404);
-    }
-
-    $product = $cartItems->first()->product;
-    $sellerId = $product->seller_id;
-    $orderId = $this->generateOrderId();
-    $totalAmount = $this->calculateTotalAmount($cart->id);
-
-    DB::beginTransaction();
-
-    try {
-        $order = Order::create([
-            'customer_id' => $cart->customer_id,
-            'seller_id' => $sellerId,
-            'order_id' => $orderId,
-            'order_status' => OrderStatus::PENDING->value,
-            'total_amount' => $totalAmount,
-            'table_number' => $request->table_number,
-            'estimated_delivery_time' => Carbon::now()->addMinutes(30),
-        ]);
-
-        foreach ($cartItems as $item) {
-            OrderItem::create([
-                'order_id' => $order->id,
-                'product_id' => $item->product_id,
-                'quantity' => $item->quantity,
-                'price' => $item->product->price,
-                'notes' => $item->notes ?? '',
-            ]);
+    {
+        $user = $request->user();
+        $cart = Cart::where('customer_id', $user->id)->firstOrFail();
+        $cartItems = CartItem::where('cart_id', $cart->id)->get();
+    
+        if ($cartItems->isEmpty()) {
+            return response()->json(['status' => false, 'message' => 'Cart items not found'], 404);
         }
-
-        CartItem::where('cart_id', $cart->id)->delete();
-
-        $this->firebaseDatabase
-            ->getReference('notifications/orders')
-            ->push([
-                'order_id' => $orderId,
+    
+        // Cek apakah table_number ada dan statusnya aktif
+        $tableNumber = $request->table_number;
+        $table = DB::table('table_numbers')
+            ->where('number', $tableNumber)
+            ->where('status', 1) // Pastikan status aktif
+            ->first();
+    
+        if (!$table) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Table number not found or not available',
+            ], 400);
+        }
+    
+        $product = $cartItems->first()->product;
+        $sellerId = $product->seller_id;
+        $orderId = $this->generateOrderId();
+        $totalAmount = $this->calculateTotalAmount($cart->id);
+    
+        DB::beginTransaction();
+    
+        try {
+            $order = Order::create([
                 'customer_id' => $cart->customer_id,
                 'seller_id' => $sellerId,
+                'order_id' => $orderId,
+                'order_status' => OrderStatus::PENDING->value,
                 'total_amount' => $totalAmount,
-                'status' => OrderStatus::PENDING->value,
-                'timestamp' => Carbon::now()->timestamp,
+                'table_number' => $tableNumber, // Gunakan table_number yang sudah divalidasi
+                'estimated_delivery_time' => Carbon::now()->addMinutes(30),
             ]);
-
-        $paymentType = $request->payment_type;
-        $bank = $request->bank;
-
-        if ($paymentType === 'BANK_TRANSFER' && !$bank) {
-            return response()->json(['status' => false, 'message' => 'Bank is required for bank transfer payment'], 400);
+    
+            foreach ($cartItems as $item) {
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $item->product_id,
+                    'quantity' => $item->quantity,
+                    'price' => $item->product->price,
+                    'notes' => $item->notes ?? '',
+                ]);
+            }
+    
+            CartItem::where('cart_id', $cart->id)->delete();
+    
+            $this->firebaseDatabase
+                ->getReference('notifications/orders')
+                ->push([
+                    'order_id' => $orderId,
+                    'customer_id' => $cart->customer_id,
+                    'seller_id' => $sellerId,
+                    'total_amount' => $totalAmount,
+                    'status' => OrderStatus::PENDING->value,
+                    'timestamp' => Carbon::now()->timestamp,
+                ]);
+    
+            $paymentType = $request->payment_type;
+            $bank = $request->bank;
+    
+            if ($paymentType === 'BANK_TRANSFER' && !$bank) {
+                return response()->json(['status' => false, 'message' => 'Bank is required for bank transfer payment'], 400);
+            }
+    
+            $paymentGatewayResponse = $this->processPayment($paymentType, $totalAmount, $orderId, $bank);
+    
+            if (isset($paymentGatewayResponse['error'])) {
+                throw new \Exception($paymentGatewayResponse['error']);
+            }
+    
+            $payment = Payment::create([
+                'order_id' => $order->id,
+                'payment_status' => OrderStatus::PENDING->value,
+                'payment_type' => $paymentType,
+                'payment_gateway' => 'midtrans',
+                'payment_gateway_reference_id' => $orderId,
+                'payment_gateway_response' => json_encode($paymentGatewayResponse['response']),
+                'gross_amount' => $totalAmount,
+                'payment_proof' => null,
+                'payment_date' => Carbon::now(),
+                'expired_at' => Carbon::now()->addHours(1),
+                'payment_va_name' => $paymentGatewayResponse['va_bank'],
+                'payment_va_number' => $paymentGatewayResponse['va_number'],
+            ]);
+    
+            DB::commit();
+    
+            return response()->json([
+                'status' => true,
+                'message' => 'Order created successfully',
+                'order' => $order,
+                'payment' => $payment,
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Order creation failed: ' . $e->getMessage());
+            return response()->json([
+                'status' => false,
+                'message' => 'Error creating order or payment: ' . $e->getMessage(),
+            ], 500);
         }
-
-        $paymentGatewayResponse = $this->processPayment($paymentType, $totalAmount, $orderId, $bank);
-
-        if (isset($paymentGatewayResponse['error'])) {
-            throw new \Exception($paymentGatewayResponse['error']);
-        }
-
-        $payment = Payment::create([
-            'order_id' => $order->id,
-            'payment_status' => OrderStatus::PENDING->value,
-            'payment_type' => $paymentType,
-            'payment_gateway' => 'midtrans',
-            'payment_gateway_reference_id' => $orderId,
-            'payment_gateway_response' => json_encode($paymentGatewayResponse['response']),
-            'gross_amount' => $totalAmount,
-            'payment_proof' => null,
-            'payment_date' => Carbon::now(),
-            'expired_at' => Carbon::now()->addHours(1),
-            'payment_va_name' => $paymentGatewayResponse['va_bank'],
-            'payment_va_number' => $paymentGatewayResponse['va_number'],
-        ]);
-
-        DB::commit();
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Order created successfully',
-            'order' => $order,
-            'payment' => $payment,
-        ], 200);
-    } catch (\Exception $e) {
-        DB::rollback();
-        Log::error('Order creation failed: ' . $e->getMessage());
-        return response()->json([
-            'status' => false,
-            'message' => 'Error creating order or payment: ' . $e->getMessage(),
-        ], 500);
     }
-}
 
     private function processPayment($paymentType, $totalAmount, $orderId, $bank = null)
 {
