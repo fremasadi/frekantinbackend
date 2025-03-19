@@ -70,7 +70,7 @@ class OrderController extends Controller
         if (!$table) {
             return response()->json([
                 'status' => false,
-                'message' => 'Table number not found or not available',
+                'message' => 'Tuliskan Nomer Meja Dengan Benar',
             ], 400);
         }
     
