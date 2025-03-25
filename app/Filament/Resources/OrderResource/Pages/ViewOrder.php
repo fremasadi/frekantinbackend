@@ -1,37 +1,21 @@
 <?php
 
-namespace App\Filament\Resources\OrderResource\RelationManagers;
+namespace App\Filament\Resources\OrderResource\Pages;
 
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\RelationManagers\RelationManager;
+use App\Filament\Resources\OrderResource;
+use Filament\Actions;
+use Filament\Resources\Pages\ViewRecord;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 
-class OrderItemsRelationManager extends RelationManager
+class ViewOrder extends ViewRecord
 {
-    protected static string $relationship = 'orderItems';
-
-    public function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('product_id')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('quantity')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('price')
-                    ->required()
-                    ->numeric(),
-            ]);
-    }
+    protected static string $resource = OrderResource::class;
 
     public function table(Table $table): Table
     {
         return $table
+            ->query($this->record->orderItems()->getQuery())
             ->columns([
                 Tables\Columns\TextColumn::make('product.name')
                     ->label('Produk')
@@ -47,11 +31,10 @@ class OrderItemsRelationManager extends RelationManager
                     ->state(function ($record) {
                         return $record->price * $record->quantity;
                     }),
+                Tables\Columns\TextColumn::make('notes')
+                    ->label('Catatan'),
             ])
             ->filters([
-                //
-            ])
-            ->headerActions([
                 //
             ])
             ->actions([
@@ -60,5 +43,12 @@ class OrderItemsRelationManager extends RelationManager
             ->bulkActions([
                 //
             ]);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\EditAction::make(),
+        ];
     }
 }

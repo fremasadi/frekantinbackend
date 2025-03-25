@@ -83,7 +83,32 @@ class OrderResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(), // Tambahkan action view
+                Action::make('viewItems')
+                ->label('Lihat Items')
+                ->icon('heroicon-o-eye')
+                ->modalHeading(fn ($record) => 'Items Order #'.$record->order_id)
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Tutup')
+                ->modalContent(function ($record) {
+                    return Table::make()
+                        ->query($record->orderItems()->with('product'))
+                        ->columns([
+                            Tables\Columns\TextColumn::make('product.name')
+                                ->label('Produk'),
+                            Tables\Columns\TextColumn::make('quantity')
+                                ->label('Jumlah'),
+                            Tables\Columns\TextColumn::make('price')
+                                ->label('Harga')
+                                ->money('IDR'),
+                            Tables\Columns\TextColumn::make('subtotal')
+                                ->label('Subtotal')
+                                ->money('IDR')
+                                ->state(fn ($record) => $record->price * $record->quantity),
+                            Tables\Columns\TextColumn::make('notes')
+                                ->label('Catatan'),
+                        ])
+                        ->paginated(false);
+                }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
