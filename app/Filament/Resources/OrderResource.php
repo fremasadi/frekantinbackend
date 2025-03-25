@@ -69,28 +69,21 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('table_number')
                     ->label('Nomor Meja')
                     ->searchable(),
-                // Tables\Columns\TextColumn::make('estimated_delivery_time')
-                //     ->dateTime()
-                //     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),
-                    // ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
-                    // ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
