@@ -12,6 +12,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\OrderResource\RelationManagers\OrderItemsRelationManager;
+
 
 class OrderResource extends Resource
 {
@@ -81,6 +83,7 @@ class OrderResource extends Resource
                 //
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(), // Tambahkan action view
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
