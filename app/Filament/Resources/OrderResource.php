@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\OrderResource\RelationManagers\OrderItemsRelationManager;
 use Filament\Tables\Actions\Action;
-use App\Filament\Resources\View;
 
 class OrderResource extends Resource
 {
@@ -91,9 +90,9 @@ class OrderResource extends Resource
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Tutup')
                     ->modalContent(function ($record) {
-                        return View::make('filament.orders.items-table', [
+                        return view('filament.orders.items-table', [
                             'items' => $record->orderItems()->with('product')->get()
-                        ]);
+                        ])->render();
                     }),
             ])
             ->bulkActions([
