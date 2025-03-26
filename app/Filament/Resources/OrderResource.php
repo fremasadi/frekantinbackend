@@ -25,26 +25,36 @@ class OrderResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('order_id')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('customer_id')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('seller_id')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('order_status')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('total_amount')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('table_number')
-                    ->maxLength(255),
-                Forms\Components\DateTimePicker::make('estimated_delivery_time'),
+                Forms\Components\Placeholder::make('order_id')
+                    ->label('Order ID')
+                    ->content(fn ($record) => $record->order_id),
+    
+                Forms\Components\Placeholder::make('customer_name')
+                    ->label('Customer Name')
+                    ->content(fn ($record) => $record->customer?->name ?? 'Unknown'),
+    
+                Forms\Components\Placeholder::make('seller_name')
+                    ->label('Seller Name')
+                    ->content(fn ($record) => $record->seller?->name ?? 'Unknown'),
+    
+                Forms\Components\Placeholder::make('order_status')
+                    ->label('Order Status')
+                    ->content(fn ($record) => $record->order_status),
+    
+                Forms\Components\Placeholder::make('total_amount')
+                    ->label('Total Amount')
+                    ->content(fn ($record) => 'Rp ' . number_format($record->total_amount, 0, ',', '.')),
+    
+                Forms\Components\Placeholder::make('table_number')
+                    ->label('Table Number')
+                    ->content(fn ($record) => $record->table_number ?? 'N/A'),
+    
+                Forms\Components\Placeholder::make('estimated_delivery_time')
+                    ->label('Estimated Delivery Time')
+                    ->content(fn ($record) => $record->estimated_delivery_time?->format('d M Y H:i') ?? 'Not Set'),
             ]);
     }
+    
 
     public static function table(Table $table): Table
     {
