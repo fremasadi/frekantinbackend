@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\OrderResource\RelationManagers\OrderItemsRelationManager;
 use Filament\Tables\Actions\Action;
+use App\Filament\Resources\View;
 
 class OrderResource extends Resource
 {
