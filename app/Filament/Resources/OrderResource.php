@@ -90,24 +90,9 @@ class OrderResource extends Resource
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Tutup')
                     ->modalContent(function ($record) {
-                        return Table::make()
-                            ->query(fn () => $record->orderItems()->with('product'))
-                            ->columns([
-                                Tables\Columns\TextColumn::make('product.name')
-                                    ->label('Produk'),
-                                Tables\Columns\TextColumn::make('quantity')
-                                    ->label('Jumlah'),
-                                Tables\Columns\TextColumn::make('price')
-                                    ->label('Harga')
-                                    ->money('IDR'),
-                                Tables\Columns\TextColumn::make('subtotal')
-                                    ->label('Subtotal')
-                                    ->money('IDR')
-                                    ->state(fn ($record) => $record->price * $record->quantity),
-                                Tables\Columns\TextColumn::make('notes')
-                                    ->label('Catatan'),
-                            ])
-                            ->paginated(false);
+                        return View::make('filament.orders.items-table', [
+                            'items' => $record->orderItems()->with('product')->get()
+                        ]);
                     }),
             ])
             ->bulkActions([
