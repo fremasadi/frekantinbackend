@@ -10,10 +10,14 @@ class EditOrder extends EditRecord
 {
     protected static string $resource = OrderResource::class;
 
+    protected function getTitle(): string
+{
+    return 'Detail Order'; // Ganti dengan teks yang diinginkan
+}
+
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
         ];
     }
 }
