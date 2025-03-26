@@ -24,6 +24,7 @@ class OrderResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
+            ->disabled() // Ini akan menonaktifkan semua input dan menyembunyikan tombol Save/Cancel
             ->schema([
                 Forms\Components\Placeholder::make('order_id')
                     ->label('Order ID')
