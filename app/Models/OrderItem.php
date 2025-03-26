@@ -36,4 +36,9 @@ class OrderItem extends Model
     {
         return $this->belongsTo(CartItem::class, 'cart_item_id');
     }
+
+    public function getSubtotalAttribute()
+    {
+        return $this->price * $this->quantity;
+    }
 }
