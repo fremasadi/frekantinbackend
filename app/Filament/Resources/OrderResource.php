@@ -71,9 +71,6 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('table_number')
                     ->label('Nomor Meja')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('subtotal')
-                    ->label('Subtotal')
-                    ->money('IDR'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),
@@ -94,7 +91,7 @@ class OrderResource extends Resource
                     ->modalCancelActionLabel('Tutup')
                     ->modalContent(function ($record) {
                         return Table::make()
-                            ->query($record->orderItems()->with('product'))
+                            ->query(fn () => $record->orderItems()->with('product'))
                             ->columns([
                                 Tables\Columns\TextColumn::make('product.name')
                                     ->label('Produk'),
@@ -106,8 +103,7 @@ class OrderResource extends Resource
                                 Tables\Columns\TextColumn::make('subtotal')
                                     ->label('Subtotal')
                                     ->money('IDR')
-                                    // Use getSubtotalAttribute from the model or calculate directly
-                                    ->state(fn (OrderItem $record) => $record->price * $record->quantity),
+                                    ->state(fn ($record) => $record->price * $record->quantity),
                                 Tables\Columns\TextColumn::make('notes')
                                     ->label('Catatan'),
                             ])
