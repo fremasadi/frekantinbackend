@@ -92,7 +92,7 @@ class OrderResource extends Resource
                     ->modalContent(function ($record) {
                         return view('filament.orders.items-table', [
                             'items' => $record->orderItems()->with('product')->get()
-                        ])->render();
+                        ]);
                     }),
             ])
             ->bulkActions([
