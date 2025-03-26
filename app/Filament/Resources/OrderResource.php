@@ -71,6 +71,9 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('table_number')
                     ->label('Nomor Meja')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('subtotal')
+                    ->label('Subtotal')
+                    ->money('IDR'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),
