@@ -89,7 +89,8 @@ class ProductResource extends Resource
                     ->formatStateUsing(fn ($state) => 'Rp.' . number_format($state, 0, ',', '.')) // Format ke IDR
                     ->sortable(),
                 Tables\Columns\ImageColumn::make('image')
-                    ->label('Foto Makanan'),
+                    ->label('Foto Makanan')
+                    ->size(100, 100),
                 Tables\Columns\TextColumn::make('stock')
                     ->numeric()
                     ->sortable(),
