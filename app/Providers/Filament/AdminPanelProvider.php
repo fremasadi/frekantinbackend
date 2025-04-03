@@ -31,8 +31,11 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => '#264F0B',
             ])
-            ->darkMode(false) // Disables dark mode completely
-            ->disableThemeSwitch() // Removes the theme toggle switch
+            ->theme(
+                Theme::make()
+                    ->dark(false)
+                    ->disableThemeSwitch()
+            )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
