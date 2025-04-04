@@ -59,7 +59,7 @@ class PaymentResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('payment_gateway_reference_id')
-                    ->label('Reference Id')
+                    ->label('Nomer Pesanan')
                     ->searchable(),
                 // Tables\Columns\TextColumn::make('order_id')
                 //     ->numeric()
@@ -123,8 +123,8 @@ class PaymentResource extends Resource
     {
         return [
             'index' => Pages\ListPayments::route('/'),
-            'create' => Pages\CreatePayment::route('/create'),
-            'edit' => Pages\EditPayment::route('/{record}/edit'),
+            // 'create' => Pages\CreatePayment::route('/create'),
+            // 'edit' => Pages\EditPayment::route('/{record}/edit'),
         ];
     }
 }
