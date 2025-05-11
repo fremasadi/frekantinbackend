@@ -103,8 +103,34 @@ class OrderResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('order_status')
+                    ->label('Status Pesanan')
+                    ->options([
+                        'pending' => 'Menunggu',
+                        'processing' => 'Diproses',
+                        'completed' => 'Selesai',
+                        'cancelled' => 'Dibatalkan',
+                    ])
+                    ->placeholder('Semua Status'),
+            
+                Tables\Filters\SelectFilter::make('seller_id')
+                    ->label('Penjual')
+                    ->relationship('seller', 'name')
+                    ->searchable()
+                    ->placeholder('Semua Penjual'),
+            
+                Tables\Filters\Filter::make('created_at')
+                    ->form([
+                        Forms\Components\DatePicker::make('from')->label('Dari'),
+                        Forms\Components\DatePicker::make('until')->label('Sampai'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['from'], fn ($q) => $q->whereDate('created_at', '>=', $data['from']))
+                            ->when($data['until'], fn ($q) => $q->whereDate('created_at', '<=', $data['until']));
+                    }),
             ])
+            
             ->actions([
                 Action::make('viewItems')
                     ->label('Lihat Items')
