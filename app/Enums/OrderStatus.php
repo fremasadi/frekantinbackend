@@ -7,6 +7,8 @@ enum OrderStatus: string
     case PENDING = 'PENDING';
     case PAID = 'PAID';
     case CANCELLED = 'CANCELLED';
+    case COMPLETED = 'CANCELLED';
+
 
     public function getLabel(): string
     {
@@ -14,6 +16,7 @@ enum OrderStatus: string
             self::PENDING => 'Menunggu Pembayaran',
             self::PAID => 'Sudah Dibayar',
             self::CANCELLED => 'Dibatalkan',
+            self::COMPLETED => 'Selesai',
         };
     }
 }
