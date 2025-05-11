@@ -44,7 +44,7 @@ class CategoryResource extends Resource
                     ->label('Nama Kategori')
                     ->searchable(),
                 Tables\Columns\ImageColumn::make('image')
-                    ->size(100, 100)
+                    ->size(50, 50)
                     ->label('Foto Kategori'),
                 // Tables\Columns\TextColumn::make('created_at')
                 //     ->dateTime()
