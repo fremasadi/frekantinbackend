@@ -28,7 +28,7 @@ class UserResource extends Resource
 
     public static function getPluralModelLabel(): string
     {
-        return 'Daftar Pengguna';
+        return '';
     }
 
     public static function form(Form $form): Form
