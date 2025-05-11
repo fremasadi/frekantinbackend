@@ -86,18 +86,19 @@ class OrderResource extends Resource
                     ->searchable()
                     ->sortable(),                
                    Tables\Columns\BadgeColumn::make('order_status')
-    ->label('Status')
-    ->enum([
-        \App\Enums\OrderStatus::PENDING->value => 'Menunggu Pembayaran',
-        \App\Enums\OrderStatus::PAID->value => 'Sudah Dibayar',
-        \App\Enums\OrderStatus::CANCELLED->value => 'Dibatalkan',
-    ])
-    ->colors([
-        'warning' => \App\Enums\OrderStatus::PENDING->value,
-        'success' => \App\Enums\OrderStatus::PAID->value,
-        'danger' => \App\Enums\OrderStatus::CANCELLED->value,
-    ])
-    ->sortable(),
+                   ->label('Status')
+                   ->enum([
+                       \App\Enums\OrderStatus::PENDING->value => 'Menunggu Pembayaran',
+                       \App\Enums\OrderStatus::PAID->value => 'Sudah Dibayar',
+                       \App\Enums\OrderStatus::CANCELLED->value => 'Dibatalkan',
+                   ])
+                   ->colors([
+                       'warning' => \App\Enums\OrderStatus::PENDING->value,
+                       'success' => \App\Enums\OrderStatus::PAID->value,
+                       'danger' => \App\Enums\OrderStatus::CANCELLED->value,
+                   ])
+                   ->sortable(),
+               
 
                 
                 Tables\Columns\TextColumn::make('total_amount')
