@@ -17,7 +17,19 @@ class TableNumberResource extends Resource
 {
     protected static ?string $model = TableNumber::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-numbered-list';
+
+    protected static ?string $navigationLabel = 'Kelola Meja';
+
+    public static function getModelLabel(): string
+    {
+        return 'Meja';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'Daftar Meja';
+    }
 
     public static function form(Form $form): Form
     {

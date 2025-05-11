@@ -17,7 +17,20 @@ class CategoryResource extends Resource
 {
     protected static ?string $model = Category::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-tag';
+
+    protected static ?string $navigationLabel = 'Kelola Kategori';
+
+    public static function getModelLabel(): string
+    {
+        return 'Kategori';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'Daftar Kategori';
+    }
+
 
     public static function form(Form $form): Form
     {

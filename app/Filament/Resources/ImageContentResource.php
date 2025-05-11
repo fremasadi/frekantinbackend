@@ -17,7 +17,19 @@ class ImageContentResource extends Resource
 {
     protected static ?string $model = ImageContent::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-photo';
+
+    protected static ?string $navigationLabel = 'Kelola Konten Banner';
+
+    public static function getModelLabel(): string
+    {
+        return 'Konten Banner';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'Daftar Konten Banner';
+    }
 
     public static function form(Form $form): Form
     {

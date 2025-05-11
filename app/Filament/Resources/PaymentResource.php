@@ -17,7 +17,19 @@ class PaymentResource extends Resource
 {
     protected static ?string $model = Payment::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
+
+    protected static ?string $navigationLabel = 'Riwayat Pembayaran';
+
+    public static function getModelLabel(): string
+    {
+        return 'Pembayaran';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'Daftar Pembayaran';
+    }
 
     public static function form(Form $form): Form
     {

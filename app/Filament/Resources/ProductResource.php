@@ -22,6 +22,18 @@ class ProductResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?string $navigationLabel = 'Kelola Menu';
+
+    public static function getModelLabel(): string
+    {
+        return 'Menu';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'Daftar Menu';
+    }
+
     public static function form(Form $form): Form
     {
         return $form
