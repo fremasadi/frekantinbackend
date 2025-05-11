@@ -84,7 +84,7 @@ class OrderResource extends Resource
                     ->label('Nama Penjual')
                     ->searchable()
                     ->sortable(),                
-                    Tables\Columns\BadgeColumn::make('order_status')
+                    Tables\Columns\TextColumn::make('order_status')
                     ->label('Status')
                     ->enum([
                         \App\Enums\OrderStatus::PENDING->value => 'Menunggu Pembayaran',
