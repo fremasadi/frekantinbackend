@@ -7,8 +7,8 @@ enum OrderStatus: string
     case PENDING = 'PENDING';
     case PAID = 'PAID';
     case CANCELLED = 'CANCELLED';
-    case COMPLETED = 'CANCELLED';
-
+    case COMPLETED = 'COMPLETED';
+        
 
     public function getLabel(): string
     {
