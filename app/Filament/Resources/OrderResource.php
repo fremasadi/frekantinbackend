@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\OrderResource\RelationManagers\OrderItemsRelationManager;
 use Filament\Tables\Actions\Action;
-use Filament\Tables\Columns\BadgeColumn;
 
 class OrderResource extends Resource
 {
@@ -85,21 +84,10 @@ class OrderResource extends Resource
                     ->label('Nama Penjual')
                     ->searchable()
                     ->sortable(),                
-                   Tables\Columns\BadgeColumn::make('order_status')
-                   ->label('Status')
-                   ->enum([
-                       \App\Enums\OrderStatus::PENDING->value => 'Menunggu Pembayaran',
-                       \App\Enums\OrderStatus::PAID->value => 'Sudah Dibayar',
-                       \App\Enums\OrderStatus::CANCELLED->value => 'Dibatalkan',
-                   ])
-                   ->colors([
-                       'warning' => \App\Enums\OrderStatus::PENDING->value,
-                       'success' => \App\Enums\OrderStatus::PAID->value,
-                       'danger' => \App\Enums\OrderStatus::CANCELLED->value,
-                   ])
-                   ->sortable(),
-               
-
+                    Tables\Columns\TextColumn::make('order_status')
+                    ->label('Status')
+                    ->formatStateUsing(fn ($state) => \App\Enums\OrderStatus::tryFrom($state)?->getLabel() ?? '-')
+                    ->searchable(),
                 
                 Tables\Columns\TextColumn::make('total_amount')
                     ->label('Total Harga')
