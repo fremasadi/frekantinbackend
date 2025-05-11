@@ -84,7 +84,7 @@ class OrderResource extends Resource
                     ->label('Nama Penjual')
                     ->searchable()
                     ->sortable(),                
-                    Tables\Columns\TextColumn::make('order_status')
+                Tables\Columns\TextColumn::make('order_status')
                     ->label('Status')
                     ->formatStateUsing(fn ($state) => \App\Enums\OrderStatus::tryFrom($state)?->getLabel() ?? '-')
                     ->searchable(),

@@ -77,10 +77,17 @@ class PaymentResource extends Resource
                 //     ->numeric()
                 //     ->sortable(),
                 Tables\Columns\TextColumn::make('payment_status')
-                    ->label('Status Pembayaran'),
-                // Tables\Columns\TextColumn::make('payment_type'),
-                // Tables\Columns\TextColumn::make('payment_gateway')
-                //     ->searchable(),
+    ->label('Status Pembayaran')
+    ->formatStateUsing(function (string $state) {
+        return match ($state) {
+            \App\Enums\PaymentStatus::PENDING->value => 'Menunggu Pembayaran',
+            \App\Enums\PaymentStatus::SUCCESS->value => 'Berhasil',
+            \App\Enums\PaymentStatus::FAILED->value => 'Gagal',
+            default => $state,
+        };
+    })
+    ->sortable(),
+
                 Tables\Columns\TextColumn::make('payment_va_name')
                     ->label('Nama Bank')
                     ->searchable(),
@@ -112,7 +119,27 @@ class PaymentResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                //
+                // Filter berdasarkan status pembayaran
+                SelectFilter::make('payment_status')
+                    ->label('Status Pembayaran')
+                    ->options([
+                        \App\Enums\PaymentStatus::PENDING->value => 'Menunggu Pembayaran',
+                        \App\Enums\PaymentStatus::SUCCESS->value => 'Berhasil',
+                        \App\Enums\PaymentStatus::FAILED->value => 'Gagal',
+                    ]),
+            
+                // Filter berdasarkan tanggal pembayaran
+                Filter::make('payment_date')
+                    ->form([
+                        DatePicker::make('from')->label('Dari Tanggal'),
+                        DatePicker::make('until')->label('Sampai Tanggal'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['from'], fn ($q, $date) => $q->whereDate('payment_date', '>=', $date))
+                            ->when($data['until'], fn ($q, $date) => $q->whereDate('payment_date', '<=', $date));
+                    }),
+            
             ])
             ->actions([
                 // Tables\Actions\EditAction::make(),
