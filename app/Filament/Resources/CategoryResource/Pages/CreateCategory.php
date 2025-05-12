@@ -9,6 +9,13 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateCategory extends CreateRecord
 {
     protected static string $resource = CategoryResource::class;
-    protected static bool $canCreateAnother = true;
-    
+    protected static bool $canCreateAnother = false;
+
+protected function getFormActions(): array
+{
+    return [
+        $this->getCreateFormAction()
+            ->label('Simpan'),
+    ];
+}
 }
