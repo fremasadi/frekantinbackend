@@ -47,10 +47,6 @@ class CategoryResource extends Resource
                     ->directory('category-images')
                     ->visibility('public')
                     ->placeholder('Seret dan jatuhkan foto di sini atau klik untuk memilih')
-                    ->uploadButtonLabel('Unggah Foto')
-                    ->removeButtonLabel('Hapus')
-                    ->downloadButtonLabel('Unduh')
-                    ->reorderButtonLabel('Ubah Urutan')
             ]);
     }
 
