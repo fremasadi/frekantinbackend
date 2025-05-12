@@ -21,6 +21,7 @@ class AppServiceProvider extends ServiceProvider
     {
         //
         date_default_timezone_set('UTC');
-
+        \Filament\Resources\Pages\CreateRecord::disableCreateAnother();
+        \Filament\Actions\CreateAction::configureUsing(fn(CreateAction $action) => $action->createAnother(false));
     }
 }
