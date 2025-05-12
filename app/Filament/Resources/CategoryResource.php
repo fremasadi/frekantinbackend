@@ -12,7 +12,6 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Forms\Components\FileUpload;
 
 class CategoryResource extends Resource
 {
@@ -42,13 +41,15 @@ class CategoryResource extends Resource
                     ->required()
                     ->maxLength(255),
                     FileUpload::make('image')
-    ->label('Gambar Produk')
-    ->placeholder('Seret gambar ke sini atau klik untuk memilih')
-    ->uploadButtonLabel('Pilih Gambar')
-    ->directory('product-images')
-    ->image()
-    ->imageEditor()
-    ->required(),
+                    ->label('Foto Kategori')
+                    ->image()
+                    ->disk('public')
+                    ->directory('category-images')
+                    ->visibility('public')
+                    ->helperText('Unggah foto kategori (format: JPG/PNG, maksimal 2MB)')
+                    ->maxSize(2048) // Batas ukuran file dalam KB (2MB = 2048KB)
+                    ->imageResizeMode('cover') // Optional: resize gambar
+                    ->imagePreviewHeight('150') // Optional: tinggi preview
             ]);
     }
 
