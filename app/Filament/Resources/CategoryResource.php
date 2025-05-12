@@ -40,16 +40,17 @@ class CategoryResource extends Resource
                     ->label('Nama Kategori')
                     ->required()
                     ->maxLength(255),
-                    FileUpload::make('image')
+                    Forms\Components\FileUpload::make('image')
                     ->label('Foto Kategori')
                     ->image()
                     ->disk('public')
                     ->directory('category-images')
                     ->visibility('public')
-                    ->helperText('Unggah foto kategori (format: JPG/PNG, maksimal 2MB)')
-                    ->maxSize(2048) // Batas ukuran file dalam KB (2MB = 2048KB)
-                    ->imageResizeMode('cover') // Optional: resize gambar
-                    ->imagePreviewHeight('150') // Optional: tinggi preview
+                    ->placeholder('Seret dan jatuhkan foto di sini atau klik untuk memilih')
+                    ->uploadButtonLabel('Unggah Foto')
+                    ->removeButtonLabel('Hapus')
+                    ->downloadButtonLabel('Unduh')
+                    ->reorderButtonLabel('Ubah Urutan')
             ]);
     }
 
