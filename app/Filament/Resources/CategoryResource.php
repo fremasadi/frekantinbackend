@@ -40,12 +40,14 @@ class CategoryResource extends Resource
                     ->label('Nama Kategori')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\FileUpload::make('image')
+                    Forms\Components\FileUpload::make('image')
                     ->label('Foto Kategori')
+                    ->helperText('Klik')
                     ->image()
-                    ->disk('public') // Gunakan disk 'public'
-                    ->directory('category-images') // Simpan di folder 'category-images'
-                    ->visibility('public'), // Atur visibilitas file menjadi publik
+                    ->disk('public')
+                    ->directory('category-images')
+                    ->visibility('public'),
+                
             ]);
     }
 
