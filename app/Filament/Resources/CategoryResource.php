@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Components\FileUpload;
 
 class CategoryResource extends Resource
 {
@@ -41,10 +42,13 @@ class CategoryResource extends Resource
                     ->required()
                     ->maxLength(255),
                     FileUpload::make('image')
-                    ->label('Unggah Gambar Anda') // Mengubah label
-                    ->directory('images')
-                    ->image()
-                    ->required(),
+    ->label('Gambar Produk')
+    ->placeholder('Seret gambar ke sini atau klik untuk memilih')
+    ->uploadButtonLabel('Pilih Gambar')
+    ->directory('product-images')
+    ->image()
+    ->imageEditor()
+    ->required(),
             ]);
     }
 
