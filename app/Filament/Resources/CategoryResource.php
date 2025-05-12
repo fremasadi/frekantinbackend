@@ -54,9 +54,7 @@ class CategoryResource extends Resource
                     ->appendFiles() // Tambahkan file baru tanpa menghapus yang lama
                     ->maxFiles(1) // Batasi hanya 1 file
                     ->moveFiles() // Pindahkan file ke direktori yang ditentukan
-            ])
-            ->createAnotherDisabled(); // Menonaktifkan tombol "Buat & buat lainnya"
-
+            ]);
     }
 
     public static function table(Table $table): Table
