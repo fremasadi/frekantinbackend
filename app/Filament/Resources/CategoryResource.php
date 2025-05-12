@@ -30,6 +30,7 @@ class CategoryResource extends Resource
     {
         return 'Daftar Kategori';
     }
+    
 
 
     public static function form(Form $form): Form
@@ -56,6 +57,20 @@ class CategoryResource extends Resource
                     ->moveFiles() // Pindahkan file ke direktori yang ditentukan
             ]);
     }
+
+    public static function getActions(): array
+{
+    return [
+        CreateAction::make()
+            ->label('New Kategori')
+            ->icon('heroicon-o-plus') // Ikon plus
+            ->color('primary')
+            // Konfigurasi untuk tampilan mobile
+            ->floatRight() // Posisi di kanan bawah
+            ->size('lg') // Ukuran besar
+            ->circular() // Tombol berbentuk bulat
+    ];
+}
 
 
     public static function table(Table $table): Table

@@ -1,0 +1,10 @@
+.filament-list-page .filament-header {
+    position: relative;
+}
+
+.floating-create-button {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    z-index: 50;
+}
