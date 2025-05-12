@@ -40,14 +40,11 @@ class CategoryResource extends Resource
                     ->label('Nama Kategori')
                     ->required()
                     ->maxLength(255),
-                    Forms\Components\FileUpload::make('image')
-                    ->label('Foto Kategori')
-                    ->helperText('Klik')
+                    FileUpload::make('image')
+                    ->label('Unggah Gambar Anda') // Mengubah label
+                    ->directory('images')
                     ->image()
-                    ->disk('public')
-                    ->directory('category-images')
-                    ->visibility('public'),
-                
+                    ->required(),
             ]);
     }
 
