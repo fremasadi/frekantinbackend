@@ -16,3 +16,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
+    ->name('filament.auth.logout');
+
+
