@@ -46,12 +46,11 @@ class CategoryResource extends Resource
                     ->disk('public')
                     ->directory('category-images')
                     ->visibility('public')
-                    ->placeholder('Pilih gambar')
+                    ->placeholder('Klik pilih gambar kategori')
                     ->previewable(true)
                     ->downloadable(true)
                     ->openable(true)
                     ->panelLayout('grid') // Tampilan grid untuk pratinjau
-                    ->panelAspectRatio(1) // Rasio aspek 1:1 untuk gambar persegi
                     ->appendFiles() // Tambahkan file baru tanpa menghapus yang lama
                     ->maxFiles(1) // Batasi hanya 1 file
                     ->moveFiles() // Pindahkan file ke direktori yang ditentukan
