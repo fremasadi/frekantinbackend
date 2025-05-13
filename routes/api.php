@@ -96,6 +96,9 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('transaction-summary', [TransactionController::class, 'getTransactionSummary']);
             Route::get('/transaction-summary-by-date', [TransactionController::class, 'getTransactionSummaryByDate']);
 
+            Route::get('/user/status', [UserController::class, 'getStatus']);
+            Route::put('/user/status', [UserController::class, 'updateStatus']);
+
         });
 
     // Customer routes

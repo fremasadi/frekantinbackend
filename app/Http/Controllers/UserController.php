@@ -62,4 +62,33 @@ class UserController extends Controller
             'data' => $user,
         ], 200);
     }
+
+     // Ambil status aktif user
+     public function getStatus(Request $request)
+     {
+         $user = Auth::user(); // Ambil user dari token sanctum
+ 
+         return response()->json([
+             'status' => true,
+             'is_active' => (bool) $user->is_active,
+         ]);
+     }
+ 
+     // Update status aktif user
+     public function updateStatus(Request $request)
+     {
+         $request->validate([
+             'is_active' => 'required|boolean',
+         ]);
+ 
+         $user = Auth::user(); // Ambil user dari token sanctum
+         $user->is_active = $request->is_active;
+         $user->save();
+ 
+         return response()->json([
+             'status' => true,
+             'message' => 'User active status updated successfully.',
+             'is_active' => (bool) $user->is_active,
+         ]);
+     }
 }
