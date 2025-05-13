@@ -9,6 +9,7 @@ use Kreait\Firebase\Factory;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB; // Tambahkan di atas jika belum
 
 class TransactionController extends Controller
 {
