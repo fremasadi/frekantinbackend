@@ -104,34 +104,67 @@ class TransactionController extends Controller
     }
 
     public function markAsCompleted($id)
-    {
-        $sellerId = auth()->id(); // Ambil ID seller yang sedang login
+{
+    $sellerId = auth()->id(); // Ambil ID seller yang sedang login
 
-        // Cari order berdasarkan ID dan seller yang login
-        $order = Order::where('id', $id)
-            ->where('seller_id', $sellerId)
-            ->where('order_status', 'PAID') // Hanya bisa update jika statusnya sudah PAID
-            ->first();
+    // Cari order berdasarkan ID dan seller yang login
+    $order = Order::where('id', $id)
+        ->where('seller_id', $sellerId)
+        ->where('order_status', 'PAID') // Hanya bisa update jika statusnya sudah PAID
+        ->first();
 
-        if (!$order) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Order not found or cannot be completed'
-            ], 404);
-        }
+    if (!$order) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Order not found or cannot be completed'
+        ], 404);
+    }
 
+    DB::beginTransaction();
+
+    try {
         // Update order_status menjadi COMPLETED
         $order->update(['order_status' => 'COMPLETED']);
 
-        // Mengirim notifikasi ke customer
+        // Ambil semua item dalam order ini
+        $orderItems = OrderItem::where('order_id', $order->id)->get();
+
+        foreach ($orderItems as $item) {
+            $product = Product::find($item->product_id);
+
+            if ($product) {
+                // Kurangi stok sesuai jumlah yang dipesan
+                $product->stock -= $item->quantity;
+
+                // Pastikan stok tidak negatif
+                if ($product->stock < 0) {
+                    $product->stock = 0;
+                }
+
+                $product->save();
+            }
+        }
+
+        // Kirim notifikasi ke customer
         $this->sendNotificationToCustomer($order);
+
+        DB::commit();
 
         return response()->json([
             'status' => true,
-            'message' => 'Order has been marked as COMPLETED',
+            'message' => 'Order has been marked as COMPLETED and stock updated.',
             'order' => $order
         ], 200);
+    } catch (\Exception $e) {
+        DB::rollback();
+
+        return response()->json([
+            'status' => false,
+            'message' => 'Failed to complete the order.',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 
     /**
      * Mengirim notifikasi ke customer menggunakan FCM
