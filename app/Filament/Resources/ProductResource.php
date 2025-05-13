@@ -103,9 +103,9 @@ class ProductResource extends Resource
                 Tables\Columns\ImageColumn::make('image')
                     ->label('Foto Makanan')
                     ->size(100, 100),
-                Tables\Columns\TextColumn::make('stock')
-                    ->numeric()
-                    ->sortable(),
+                // Tables\Columns\TextColumn::make('stock')
+                //     ->numeric()
+                //     ->sortable(),
                 Tables\Columns\ToggleColumn::make('is_active')
                     ->label('Status')
                     ->sortable(),
