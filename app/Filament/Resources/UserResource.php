@@ -12,6 +12,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Components\Toggle;
+use Filament\Tables\Columns\IconColumn;
 
 class UserResource extends Resource
 {
@@ -36,6 +38,7 @@ class UserResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
+                    ->label('Nama')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('email')
@@ -47,13 +50,19 @@ class UserResource extends Resource
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('phone')
+                    ->label('No.Telefon')
                     ->tel()
                     ->maxLength(255),
                 Forms\Components\FileUpload::make('image')
+                    ->label('Foto Jika Ada')
                     ->image(),
                 Forms\Components\TextInput::make('role')
+                    ->label('Peran')
                     ->required()
                     ->maxLength(255),
+                    Toggle::make('is_active')
+                    ->label('Aktifkan Akun')
+                    ->default(true),
             ]);
     }
 
@@ -62,14 +71,21 @@ class UserResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                ->label('Nama')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone')
+                    ->label('No.Telefon')
                     ->searchable(),
-                Tables\Columns\ImageColumn::make('image'),
+                Tables\Columns\ImageColumn::make('image')
+                    ->label('Foto'),
                 Tables\Columns\TextColumn::make('role')
+                    ->label('Peran')
                     ->searchable(),
+                    IconColumn::make('is_active')
+                    ->label('Status')
+                    ->boolean(),
                 // Tables\Columns\TextColumn::make('created_at')
                 //     ->dateTime()
                 //     ->sortable()
@@ -84,7 +100,7 @@ class UserResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                // Tables\Actions\DeleteAction::make(),
 
             ])
             ->bulkActions([

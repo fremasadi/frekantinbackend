@@ -9,6 +9,7 @@ class Category extends Model
 {
     use HasFactory;
     protected $fillable = ['name', 'image']; // field yang dapat diisi massal
+    
     public function products()
     {
         return $this->hasMany(\App\Models\Product::class, 'category_id');

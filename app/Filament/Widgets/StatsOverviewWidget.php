@@ -45,10 +45,10 @@ class StatsOverviewWidget extends \Filament\Widgets\StatsOverviewWidget
                 ->icon('heroicon-o-currency-dollar')
                 ->color('success'),
 
-            Stat::make('Jumlah pesanan rata-rata', 'Rp ' . number_format($averageOrderValue, 0, ',', '.'))
-                ->description('Harga pesanan rata-rata')
-                ->icon('heroicon-o-calculator')
-                ->color('warning'),
+            // Stat::make('Jumlah pesanan rata-rata', 'Rp ' . number_format($averageOrderValue, 0, ',', '.'))
+            //     ->description('Harga pesanan rata-rata')
+            //     ->icon('heroicon-o-calculator')
+            //     ->color('warning'),
 
             // Stat::make('Order Status', "{$pendingOrders} Pending | {$processingOrders} Processing | {$completedOrders} Completed")
             //     ->description('Current order distribution')

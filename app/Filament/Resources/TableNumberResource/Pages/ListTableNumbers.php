@@ -14,7 +14,7 @@ class ListTableNumbers extends ListRecords
 {
     return [
         Actions\CreateAction::make()
-            ->label('')
+            ->label('Tambah Meja')
             ->icon('heroicon-o-plus')
             ->color('primary')
             ->extraAttributes([

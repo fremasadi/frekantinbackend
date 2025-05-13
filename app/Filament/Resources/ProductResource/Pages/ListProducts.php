@@ -14,7 +14,7 @@ class ListProducts extends ListRecords
     {
         return [
             Actions\CreateAction::make()
-                ->label('')
+                ->label('Tambah Menu')
                 ->icon('heroicon-o-plus')
                 ->color('primary')
                 ->extraAttributes([

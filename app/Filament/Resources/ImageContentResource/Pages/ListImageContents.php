@@ -14,7 +14,7 @@ class ListImageContents extends ListRecords
 {
     return [
         Actions\CreateAction::make()
-            ->label('')
+            ->label('Tambah Gambar')
             ->icon('heroicon-o-plus')
             ->color('primary')
             ->extraAttributes([

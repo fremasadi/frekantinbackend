@@ -13,39 +13,39 @@ use App\Models\Category;
 class ProductController extends Controller
 {
    // Menampilkan semua produk yang is_active = true
-public function index()
-{
-    $products = Product::where('is_active', true) // Hanya produk aktif
-        ->with(['seller', 'category'])
-        ->get()
-        ->map(function ($product) {
-            // Menambahkan URL lengkap untuk gambar produk
-            $product->image = $product->image ? url('storage/' . $product->image) : null;
-
-            // Menambahkan URL lengkap untuk gambar penjual
-            if ($product->seller) {
-                $product->seller->image = $product->seller->image ? url('storage/' . $product->seller->image) : null;
-            }
-
-            // Menambahkan URL lengkap untuk gambar kategori
-            if ($product->category) {
-                $product->category->image = $product->category->image ? url('storage/' . $product->category->image) : null;
-            }
-
-            return $product;
-        });
-
-    return response()->json([
-        'status' => true,
-        'data' => $products
-    ]);
-}
+   public function index()
+   {
+       $products = Product::where('is_active', true)
+           ->whereHas('seller', function ($query) {
+               $query->where('is_active', true);
+           })
+           ->with(['seller', 'category'])
+           ->get()
+           ->map(function ($product) {
+               $product->image = $product->image ? url('storage/' . $product->image) : null;
+   
+               if ($product->seller) {
+                   $product->seller->image = $product->seller->image ? url('storage/' . $product->seller->image) : null;
+               }
+   
+               if ($product->category) {
+                   $product->category->image = $product->category->image ? url('storage/' . $product->category->image) : null;
+               }
+   
+               return $product;
+           });
+   
+       return response()->json([
+           'status' => true,
+           'data' => $products
+       ]);
+   }
+   
 
 
     // Menampilkan produk berdasarkan categoryId
     public function getProductsByCategory($categoryId)
-    {
-    // Validasi apakah categoryId ada di database
+{
     $category = Category::find($categoryId);
 
     if (!$category) {
@@ -55,21 +55,20 @@ public function index()
         ], 404);
     }
 
-    // Mengambil produk berdasarkan categoryId
-    $products = Product::with(['seller', 'category'])
-        ->where('category_id', $categoryId)
-        ->where('is_active', true) // Hanya produk yang aktif
+    $products = Product::where('category_id', $categoryId)
+        ->where('is_active', true)
+        ->whereHas('seller', function ($query) {
+            $query->where('is_active', true);
+        })
+        ->with(['seller', 'category'])
         ->get()
         ->map(function ($product) {
-            // Menambahkan URL lengkap untuk gambar produk
             $product->image = $product->image ? url('storage/' . $product->image) : null;
 
-            // Menambahkan URL lengkap untuk gambar penjual
             if ($product->seller) {
                 $product->seller->image = $product->seller->image ? url('storage/' . $product->seller->image) : null;
             }
 
-            // Menambahkan URL lengkap untuk gambar kategori
             if ($product->category) {
                 $product->category->image = $product->category->image ? url('storage/' . $product->category->image) : null;
             }
@@ -82,6 +81,7 @@ public function index()
         'data' => $products
     ]);
 }
+
 
 
     //menampilkan produk seller login saja

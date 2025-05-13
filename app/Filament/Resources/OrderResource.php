@@ -97,11 +97,12 @@ class OrderResource extends Resource
                     ->label('Nomor Meja')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label('Dibuat')
                     ->dateTime()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
+                // Tables\Columns\TextColumn::make('updated_at')
+                //     ->dateTime()
+                //     ->sortable()
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([

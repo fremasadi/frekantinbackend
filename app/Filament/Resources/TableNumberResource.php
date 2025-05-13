@@ -36,6 +36,7 @@ class TableNumberResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('number')
+                    ->label('Nomer')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\Toggle::make('status')

@@ -14,7 +14,7 @@ class ListCategories extends ListRecords
 {
     return [
         Actions\CreateAction::make()
-            ->label('')
+            ->label('Tambah Kategori')
             ->icon('heroicon-o-plus')
             ->color('primary')
             ->extraAttributes([
