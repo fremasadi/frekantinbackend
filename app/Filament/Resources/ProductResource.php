@@ -71,10 +71,10 @@ class ProductResource extends Resource
                     ->disk('public') // Gunakan disk 'public'
                     ->directory('product-images') // Simpan di folder 'category-images'
                     ->visibility('public'), // Atur visibilitas file menjadi publik
-                // Forms\Components\TextInput::make('stock')
-                //     ->required()
-                //     ->numeric()
-                //     ->default(0),
+                Forms\Components\TextInput::make('stock')
+                    ->required()
+                    ->numeric()
+                    ->default(0),
                 Forms\Components\Toggle::make('is_active')
                     ->label('Status') // Menampilkan status aktif atau tidak
                     ->default(true),
@@ -103,9 +103,9 @@ class ProductResource extends Resource
                 Tables\Columns\ImageColumn::make('image')
                     ->label('Foto Makanan')
                     ->size(100, 100),
-                // Tables\Columns\TextColumn::make('stock')
-                //     ->numeric()
-                //     ->sortable(),
+                Tables\Columns\TextColumn::make('stock')
+                    ->numeric()
+                    ->sortable(),
                 Tables\Columns\ToggleColumn::make('is_active')
                     ->label('Status')
                     ->sortable(),
