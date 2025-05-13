@@ -14,7 +14,7 @@ class Dashboard extends BaseDashboard
         return [
             StatsOverviewWidget::class,
             OrdersChart::class,
-            RevenueChart::class,
+            // RevenueChart::class,
         ];
     }
 }
