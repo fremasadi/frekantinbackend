@@ -9,4 +9,12 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateImageContent extends CreateRecord
 {
     protected static string $resource = ImageContentResource::class;
+
+    protected function getFormActions(): array
+    {
+        return [
+            $this->getCreateFormAction()
+                ->label('Simpan'),
+        ];
+    }
 }
