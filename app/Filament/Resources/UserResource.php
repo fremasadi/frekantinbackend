@@ -55,7 +55,7 @@ class UserResource extends Resource
                     ->tel()
                     ->maxLength(255),
                 Forms\Components\FileUpload::make('image')
-                    ->placeholder('Klik')
+                    ->placeholder('Klik pilih gambar pengguna')
                     ->label('Foto Jika Ada')
                     ->image(),
                     Select::make('role')
