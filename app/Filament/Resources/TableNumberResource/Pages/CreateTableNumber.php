@@ -9,4 +9,12 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateTableNumber extends CreateRecord
 {
     protected static string $resource = TableNumberResource::class;
+
+    protected function getFormActions(): array
+    {
+        return [
+            $this->getCreateFormAction()
+                ->label('Simpan'),
+        ];
+    }
 }
