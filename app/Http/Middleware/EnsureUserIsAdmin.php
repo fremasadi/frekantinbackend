@@ -4,21 +4,21 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 class EnsureUserIsAdmin
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
     public function handle(Request $request, Closure $next)
     {
-        if (auth()->check() && auth()->user()->role === 'admin') {
+        // Jika belum login, lanjutkan dulu (akan ditangani oleh auth middleware)
+        if (!auth()->check()) {
             return $next($request);
         }
 
-        abort(403, 'Unauthorized');
+        // Jika sudah login, tapi bukan admin, tolak
+        if (auth()->user()->role !== 'admin') {
+            abort(403, 'Unauthorized');
+        }
+
+        return $next($request);
     }
 }
