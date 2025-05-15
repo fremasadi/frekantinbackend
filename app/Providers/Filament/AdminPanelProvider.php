@@ -30,7 +30,6 @@ class AdminPanelProvider extends PanelProvider
         ->path('admin')
         ->login()
         ->darkMode(false) // 👈 Diletakkan sebelum ->auth()
-        ->auth(fn () => Auth::check() && Auth::user()->role === 'admin')
         ->colors([
             'primary' => '#264F0B',
         ])
@@ -57,6 +56,7 @@ class AdminPanelProvider extends PanelProvider
             DisableBladeIconComponents::class,
             DispatchServingFilamentEvent::class,
         ])
+        ->auth(fn () => Auth::check() && Auth::user()->role === 'admin')
         ->authMiddleware([
             Authenticate::class,
         ]);
