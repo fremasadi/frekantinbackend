@@ -56,10 +56,10 @@ class AdminPanelProvider extends PanelProvider
             DisableBladeIconComponents::class,
             DispatchServingFilamentEvent::class,
         ])
-        ->auth(fn () => Auth::check() && Auth::user()->role === 'admin')
         ->authMiddleware([
             Authenticate::class,
-        ]);
+        ])
+        ->auth(fn () => Auth::check() && Auth::user()->role === 'admin');
 
     }
 }
