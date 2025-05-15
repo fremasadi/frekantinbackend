@@ -47,7 +47,7 @@ class CategoryResource extends Resource
                     ->disk('public')
                     ->directory('category-images')
                     ->visibility('public')
-                    ->placeholder('Klik pilih gambar kategori')
+                    ->placeholder('Klik')
                     ->previewable(true)
                     ->downloadable(true)
                     ->openable(true)
