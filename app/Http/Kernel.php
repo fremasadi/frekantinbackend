@@ -51,6 +51,8 @@ class Kernel extends HttpKernel
     protected $routeMiddleware = [
         // ...
         'check.role' => \App\Http\Middleware\CheckRole::class,
+        'admin.only' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+
     ];
 
     /**

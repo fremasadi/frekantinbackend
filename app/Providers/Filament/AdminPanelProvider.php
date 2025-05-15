@@ -18,49 +18,47 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Filament\Pages\Dashboard;
-use Illuminate\Support\Facades\Auth;
 
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
-        ->default()
-        ->id('admin')
-        ->path('admin')
-        ->login()
-        ->darkMode(false) // 👈 Diletakkan sebelum ->auth()
-        ->colors([
-            'primary' => '#264F0B',
-        ])
-        ->brandName('Kantin Nguldi')
-        ->topNavigation(false)
-        ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
-        ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
-        ->pages([
-            Dashboard::class,
-        ])
-        ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
-        ->widgets([
-            Widgets\AccountWidget::class,
-            Widgets\FilamentInfoWidget::class,
-        ])
-        ->middleware([
-            EncryptCookies::class,
-            AddQueuedCookiesToResponse::class,
-            StartSession::class,
-            AuthenticateSession::class,
-            ShareErrorsFromSession::class,
-            VerifyCsrfToken::class,
-            SubstituteBindings::class,
-            DisableBladeIconComponents::class,
-            DispatchServingFilamentEvent::class,
-        ])
-        ->authMiddleware([
-            Authenticate::class,
-        ])
-        ->auth(function () {
-            return Auth::check() && Auth::user()->role === 'admin';
-        });
+            ->default()
+            ->id('admin')
+            ->path('admin')
+            ->login()
+            ->colors([
+                'primary' => '#264F0B',
+            ])
+            ->brandName('Kantin Nguldi')
+            ->darkMode(false) // Matikan dark mode
+            ->topNavigation(false)
+            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
+            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
+            ->pages([
+                Dashboard::class,
+                // Dashboard::class,
+            ])
+            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            ->widgets([
+                Widgets\AccountWidget::class,
+                Widgets\FilamentInfoWidget::class,
+            ])
+            ->middleware([
+                EncryptCookies::class,
+                AddQueuedCookiesToResponse::class,
+                StartSession::class,
+                AuthenticateSession::class,
+                ShareErrorsFromSession::class,
+                VerifyCsrfToken::class,
+                SubstituteBindings::class,
+                DisableBladeIconComponents::class,
+                DispatchServingFilamentEvent::class,
+                \App\Http\Middleware\EnsureUserIsAdmin::class, // ⬅️ tambahkan middleware custom
+            ])
+            ->authMiddleware([
+                Authenticate::class,
+            ]);
     }
 }
