@@ -32,6 +32,7 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => '#264F0B',
             ])
             ->brandName('Kantin Nguldi')
+            ->auth(fn () => Auth::check() && Auth::user()->role === 'admin') // ⬅️ logic pembatasan role
             ->darkMode(false) // Matikan dark mode
             ->topNavigation(false)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
