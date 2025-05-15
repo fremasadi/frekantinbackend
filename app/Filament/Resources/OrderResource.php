@@ -139,7 +139,6 @@ class OrderResource extends Resource
                     ->icon('heroicon-o-eye')
                     ->modalHeading(fn ($record) => 'Items Order #'.$record->order_id)
                     ->modalSubmitAction(false)
-                    ->modalCancelActionLabel('Tutup')
                     ->modalContent(function ($record) {
                         return view('filament.orders.items-table', [
                             'items' => $record->orderItems()->with('product')->get()
