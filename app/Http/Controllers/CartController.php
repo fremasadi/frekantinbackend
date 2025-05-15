@@ -30,11 +30,24 @@ class CartController extends Controller
 
         // Update URL image dari produk yang ada di keranjang
         $cartItems = $cart->items->map(function ($item) {
-            if ($item->product && $item->product->image) {
-                $item->product->image = $this->getFullImageUrl($item->product->image);
+            $product = $item->product;
+        
+            if ($product && $product->image) {
+                $product->image = $this->getFullImageUrl($product->image);
             }
+        
+            // Tambahkan info seller jika ada
+            if ($product && $product->seller) {
+                $product->seller_info = [
+                    'id' => $product->seller->id,
+                    'name' => $product->seller->name,
+                    'is_active' => (bool) $product->seller->is_active,
+                ];
+            }
+        
             return $item;
         });
+        
 
         return response()->json([
             'status' => true,
