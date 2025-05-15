@@ -6,7 +6,7 @@
                 <th class="text-left p-2">Jumlah</th>
                 <th class="text-left p-2">Harga</th>
                 <th class="text-left p-2">Subtotal</th>
-                <th class="text-left p-2">Catatan</th>
+                {{-- <th class="text-left p-2">Catatan</th> --}}
             </tr>
         </thead>
         <tbody>
@@ -16,7 +16,7 @@
                     <td class="p-2">{{ $item->quantity }}</td>
                     <td class="p-2">Rp {{ number_format($item->price, 2, ',', '.') }}</td>
                     <td class="p-2">Rp {{ number_format($item->price * $item->quantity, 2, ',', '.') }}</td>
-                    <td class="p-2">{{ $item->notes ?? '-' }}</td>
+                    {{-- <td class="p-2">{{ $item->notes ?? '-' }}</td> --}}
                 </tr>
             @endforeach
         </tbody>
