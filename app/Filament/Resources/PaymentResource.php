@@ -74,8 +74,8 @@ class PaymentResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('payment_gateway_reference_id')
-                    ->label('Nomer Pesanan')
-                    ->searchable(),
+                ->label('Reference Id')
+                ->searchable(),
                 // Tables\Columns\TextColumn::make('order_id')
                 //     ->numeric()
                 //     ->sortable(),
