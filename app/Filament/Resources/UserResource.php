@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\Toggle;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Forms\Components\Select;
 
 class UserResource extends Resource
 {
@@ -54,12 +55,18 @@ class UserResource extends Resource
                     ->tel()
                     ->maxLength(255),
                 Forms\Components\FileUpload::make('image')
+                    ->placeholder('Klik pilih gambar kategori')
                     ->label('Foto Jika Ada')
                     ->image(),
-                Forms\Components\TextInput::make('role')
+                    Select::make('role')
                     ->label('Peran')
                     ->required()
-                    ->maxLength(255),
+                    ->options([
+                        'admin' => 'Admin',
+                        'seller' => 'Penjual',
+                        'customer' => 'Pelanggan',
+                    ])
+                    ->native(false),
                     Toggle::make('is_active')
                     ->label('Aktifkan Akun')
                     ->default(true),
