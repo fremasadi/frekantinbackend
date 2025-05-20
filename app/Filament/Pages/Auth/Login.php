@@ -48,4 +48,12 @@ class Login extends BaseLogin
             ->required()
             ->extraAttributes(['class' => 'custom-password-input']);
     }
+    
+    /**
+     * Mencegah rendering dengan card atau container default
+     */
+    protected function hasFullWidthFormContainer(): bool
+    {
+        return true;
+    }
 }
