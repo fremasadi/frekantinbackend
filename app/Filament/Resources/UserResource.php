@@ -42,7 +42,6 @@ class UserResource extends Resource
                     ->label('Nama')
                     ->required()
                     ->unique(table: 'users', column: 'name', ignoreRecord: true)
-                    ->rule('unique:users,name')
                     ->validationMessages([
                         'unique' => 'Nama sudah digunakan.',
                     ])
