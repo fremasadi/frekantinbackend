@@ -32,7 +32,7 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => '#264F0B',
             ])
-            ->brandName('Kantin Nguldi')
+            ->brandName('Admin Kantin Nguldi')
             ->darkMode(false) // Matikan dark mode
             ->topNavigation(false)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
