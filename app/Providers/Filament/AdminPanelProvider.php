@@ -19,7 +19,6 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\Auth\Login;
-use Illuminate\Support\HtmlString;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -33,7 +32,7 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => '#264F0B',
             ])
-            ->brandName(new HtmlString('<div style="text-align: center;">Selamat Datang<br>Admin Kantin Nguldi</div>'))
+            ->brandName('Admin Kantin Nguldi')
             ->darkMode(false) // Matikan dark mode
             ->topNavigation(false)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
