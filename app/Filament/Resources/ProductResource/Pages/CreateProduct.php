@@ -17,4 +17,9 @@ class CreateProduct extends CreateRecord
                 ->label('Simpan'),
         ];
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }
