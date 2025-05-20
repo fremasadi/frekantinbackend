@@ -57,17 +57,9 @@ class UserResource extends Resource
                     ->required(fn (string $context) => $context === 'create')
                     ->dehydrateStateUsing(fn ($state) => bcrypt($state))
                     ->dehydrated(fn ($state) => filled($state))
-                    ->same('password_confirmation') // validasi jika diisi
                     ->validationMessages([
                         'required' => 'Kata sandi wajib diisi saat pembuatan pengguna.',
-                        'same' => 'Konfirmasi kata sandi tidak cocok.',
                     ]),
-                
-                Forms\Components\TextInput::make('password_confirmation')
-                    ->label('Konfirmasi Kata Sandi')
-                    ->password()
-                    ->maxLength(255)
-                    ->dehydrated(false), // tidak disimpan ke database
                        
                 Forms\Components\TextInput::make('phone')
                     ->label('No.Telefon')
