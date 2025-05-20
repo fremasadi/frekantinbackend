@@ -30,8 +30,10 @@ class UserController extends Controller
     // Update data user yang sedang login
     public function update(Request $request)
 {
-    $user = $request->user();
+    // Get the authenticated user
+    $user = auth()->user();
 
+    // Check if user is authenticated
     if (!$user) {
         return response()->json([
             'status' => false,
@@ -76,6 +78,7 @@ class UserController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'Update failed due to server error',
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
