@@ -79,10 +79,10 @@ class SellerEarningsResource extends Resource
                     ->label('Status')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('paid_at')
-                    ->label('Tanggal Dibayar')
-                    ->dateTime()
-                    ->sortable(),
+                // Tables\Columns\TextColumn::make('paid_at')
+                //     ->label('Tanggal Dibayar')
+                //     ->dateTime()
+                //     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -108,7 +108,7 @@ class SellerEarningsResource extends Resource
                     ->icon('heroicon-o-check-circle'),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+                // Tables\Actions\DeleteBulkAction::make(),
             ]);
     }
 
@@ -121,8 +121,8 @@ class SellerEarningsResource extends Resource
     {
         return [
             'index' => Pages\ListSellerEarnings::route('/'),
-            'create' => Pages\CreateSellerEarnings::route('/create'),
-            'edit' => Pages\EditSellerEarnings::route('/{record}/edit'),
+            // 'create' => Pages\CreateSellerEarnings::route('/create'),
+            // 'edit' => Pages\EditSellerEarnings::route('/{record}/edit'),
         ];
     }
 }
