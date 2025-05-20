@@ -33,7 +33,7 @@ class UserController extends Controller
     $user = $request->user(); // Mendapatkan data pengguna dari token Sanctum
 
     $validator = Validator::make($request->all(), [
-        'username' => 'sometimes|string|max:255',
+        'name' => 'sometimes|string|max:255',
         'email' => 'sometimes|email|max:255|unique:users,email,' . $user->id,
         'phone' => 'sometimes|string|max:15',
         // Password dihapus dari validasi
@@ -48,7 +48,7 @@ class UserController extends Controller
     }
 
     // Update data user
-    $user->username = $request->username ?? $user->username;
+    $user->name = $request->name ?? $user->name;
     $user->email = $request->email ?? $user->email;
     $user->phone = $request->phone ?? $user->phone;
 
