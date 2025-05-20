@@ -41,6 +41,10 @@ class CategoryResource extends Resource
                     ->label('Nama Kategori')
                     ->required()
                     ->unique(table: 'categories', column: 'name', ignoreRecord: true)
+                    ->rule('unique:categories,name')
+                    ->validationMessages([
+                        'unique' => 'Nama kategori sudah digunakan.',
+                    ])
                     ->maxLength(255),
                     Forms\Components\FileUpload::make('image')
                     ->label('Foto Kategori')
