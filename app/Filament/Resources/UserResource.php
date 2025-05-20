@@ -57,7 +57,6 @@ class UserResource extends Resource
                     ->required(fn (string $context) => $context === 'create')
                     ->dehydrateStateUsing(fn ($state) => bcrypt($state))
                     ->dehydrated(fn ($state) => filled($state)) // <--- Kunci agar tidak menyimpan null
-                    ->same('password_confirmation')
                     ->validationMessages([
                         'required' => 'Kata sandi wajib diisi saat pembuatan pengguna.',
                     ]),                   
