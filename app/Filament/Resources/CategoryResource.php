@@ -40,6 +40,7 @@ class CategoryResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->label('Nama Kategori')
                     ->required()
+                    ->unique(table: 'categories', column: 'name', ignoreRecord: true)
                     ->maxLength(255),
                     Forms\Components\FileUpload::make('image')
                     ->label('Foto Kategori')
