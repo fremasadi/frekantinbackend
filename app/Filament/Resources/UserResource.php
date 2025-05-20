@@ -51,9 +51,15 @@ class UserResource extends Resource
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('password')
+                    ->label('Kata Sandi')
                     ->password()
-                    ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->dehydrateStateUsing(fn ($state) => filled($state) ? bcrypt($state) : null)
+                    ->required(fn (string $context) => $context === 'create')
+                    ->same('password_confirmation') // jika ingin ada konfirmasi
+                    ->validationMessages([
+                        'required' => 'Kata sandi wajib diisi saat pembuatan pengguna.',
+                    ]),                
                 Forms\Components\TextInput::make('phone')
                     ->label('No.Telefon')
                     ->tel()
