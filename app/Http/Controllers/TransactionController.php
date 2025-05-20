@@ -12,6 +12,7 @@ use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB; // Tambahkan di atas jika belum
+use Carbon\Carbon;
 
 class TransactionController extends Controller
 {
@@ -152,6 +153,7 @@ class TransactionController extends Controller
         $this->sendNotificationToCustomer($order);
 
         DB::commit();
+        \Artisan::call('backfill:seller-earnings');
 
         return response()->json([
             'status' => true,
