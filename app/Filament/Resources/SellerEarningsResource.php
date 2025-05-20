@@ -19,8 +19,7 @@ class SellerEarningsResource extends Resource
     protected static ?string $model = SellerEarning::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
-    protected static ?string $navigationLabel = 'Pendapatan Seller';
-    protected static ?string $navigationGroup = 'Laporan';
+    protected static ?string $navigationLabel = 'Pendapatan Penjual';
 
     public static function form(Form $form): Form
     {
@@ -66,7 +65,7 @@ class SellerEarningsResource extends Resource
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('month')
-                    ->label('Bulan')
+                    ->label('Tanggal')
                     ->date('F Y')
                     ->sortable(),
 
@@ -77,7 +76,11 @@ class SellerEarningsResource extends Resource
 
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
-                    ->sortable(),
+                    ->sortable()
+                    ->formatStateUsing(function ($state) {
+                        return $state === 'paid' ? 'Sudah Dibayar' : 'Belum Dibayar';
+                    }),
+                
 
                 // Tables\Columns\TextColumn::make('paid_at')
                 //     ->label('Tanggal Dibayar')
