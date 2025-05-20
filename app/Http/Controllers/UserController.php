@@ -35,7 +35,7 @@ class UserController extends Controller
     $validator = Validator::make($request->all(), [
         'name' => 'sometimes|string|max:255',
         'email' => 'sometimes|email|max:255|unique:users,email,' . $user->id,
-        'phone' => 'sometimes|string|max:15',
+        // 'phone' => 'sometimes|string|max:15',
         // Password dihapus dari validasi
     ]);
 
@@ -50,13 +50,13 @@ class UserController extends Controller
     // Update data user
     $user->name = $request->name ?? $user->name;
     $user->email = $request->email ?? $user->email;
-    $user->phone = $request->phone ?? $user->phone;
+    // $user->phone = $request->phone ?? $user->phone;
 
     $user->save();
 
     return response()->json([
         'status' => true,
-        'message' => 'User updated successfully',
+        'message' => 'Data Berhasil DiUpdate',
         'data' => $user,
     ], 200);
 }
