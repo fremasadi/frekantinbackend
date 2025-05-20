@@ -99,6 +99,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/user/status', [UserController::class, 'getStatus']);
             Route::put('/user/status', [UserController::class, 'updateStatus']);
 
+            Route::get('/my-earnings', [SellerEarningController::class, 'getByAuthSeller']);
+
         });
 
     // Customer routes
