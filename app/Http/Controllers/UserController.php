@@ -29,41 +29,73 @@ class UserController extends Controller
 
     // Update data user yang sedang login
     public function update(Request $request)
-    {
-        $user = $request->user(); // Mendapatkan data pengguna dari token Sanctum
+{
+    $user = $request->user(); // Mendapatkan data pengguna dari token Sanctum
 
-        $validator = Validator::make($request->all(), [
-            'username' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|max:255|unique:users,email,' . $user->id,
-            'phone' => 'sometimes|string|max:15',
-            'password' => 'nullable|string|min:8|confirmed',
-        ]);
+    $validator = Validator::make($request->all(), [
+        'username' => 'sometimes|string|max:255',
+        'email' => 'sometimes|email|max:255|unique:users,email,' . $user->id,
+        'phone' => 'sometimes|string|max:15',
+        // Password dihapus dari validasi
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validation Error',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        // Update data user
-        $user->username = $request->username ?? $user->username;
-        $user->email = $request->email ?? $user->email;
-        $user->phone = $request->phone ?? $user->phone;
-
-        if ($request->password) {
-            $user->password = Hash::make($request->password);
-        }
-
-        $user->save();
-
+    if ($validator->fails()) {
         return response()->json([
-            'status' => true,
-            'message' => 'User updated successfully',
-            'data' => $user,
-        ], 200);
+            'status' => false,
+            'message' => 'Validation Error',
+            'errors' => $validator->errors(),
+        ], 422);
     }
+
+    // Update data user
+    $user->username = $request->username ?? $user->username;
+    $user->email = $request->email ?? $user->email;
+    $user->phone = $request->phone ?? $user->phone;
+
+    $user->save();
+
+    return response()->json([
+        'status' => true,
+        'message' => 'User updated successfully',
+        'data' => $user,
+    ], 200);
+}
+
+
+    public function updatePassword(Request $request)
+{
+    $user = $request->user(); // pengguna yang login via token
+
+    $validator = Validator::make($request->all(), [
+        'current_password' => 'required|string',
+        'password' => 'required|string|min:8|confirmed',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Validation Error',
+            'errors' => $validator->errors(),
+        ], 422);
+    }
+
+    // Verifikasi password lama
+    if (!Hash::check($request->current_password, $user->password)) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Password lama tidak sesuai.',
+        ], 403);
+    }
+
+    // Simpan password baru
+    $user->password = Hash::make($request->password);
+    $user->save();
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Password berhasil diperbarui.',
+    ], 200);
+}
 
      // Ambil status aktif user
      public function getStatus(Request $request)

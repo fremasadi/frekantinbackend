@@ -67,8 +67,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/products/rating', [ProductController::class, 'getProductsByRating']);
 
     Route::get('/user', [UserController::class, 'index']); // Fetch user data
-    Route::put('/user', [UserController::class, 'update']); // Update user data
+    Route::put('/user', [UserController::class, 'update']);
 
+    // Update password saja
+    Route::put('/user/password', [UserController::class, 'updatePassword']);
+    
     Route::get('orders/{orderId}/reviews', [ReviewController::class, 'getReviewsByOrderId']);
 
     // Admin  routes
