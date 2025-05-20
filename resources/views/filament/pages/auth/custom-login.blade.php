@@ -5,10 +5,10 @@
         <!-- Heading dikosongkan sesuai desain -->
     </x-slot>
 
-    {{-- <!-- Logo Frekantin -->
+    <!-- Logo Frekantin -->
     <div class="flex justify-center mb-8">
         <img src="/assets/ic_logo.png" alt="Frekantin" class="h-10">
-    </div> --}}
+    </div>
 
     <!-- Form login yang sederhana -->
     <x-filament-panels::form wire:submit="authenticate">
