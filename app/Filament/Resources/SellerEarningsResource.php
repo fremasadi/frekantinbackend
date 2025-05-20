@@ -93,7 +93,7 @@ class SellerEarningsResource extends Resource
                     ]),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                // Tables\Actions\EditAction::make(),
                 Action::make('markAsPaid')
                     ->label('Tandai Lunas')
                     ->color('success')
