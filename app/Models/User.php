@@ -50,5 +50,11 @@ class User extends Authenticatable
     {
         return $this->role === self::ROLE_CUSTOMER;
     }
+
+    public function earnings()
+{
+    return $this->hasMany(SellerEarning::class);
+}
+
     
 }
