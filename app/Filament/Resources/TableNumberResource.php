@@ -38,6 +38,11 @@ class TableNumberResource extends Resource
                 Forms\Components\TextInput::make('number')
                     ->label('Nomer')
                     ->required()
+                    ->unique(table: 'table_numbers', column: 'number', ignoreRecord: true)
+                    ->rule('unique:table_numbers,number')
+                    ->validationMessages([
+                        'unique' => 'Nomer Meja sudah digunakan.',
+                    ])
                     ->maxLength(255),
                 Forms\Components\Toggle::make('status')
                     ->required(),

@@ -41,6 +41,11 @@ class UserResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->label('Nama')
                     ->required()
+                    ->unique(table: 'users', column: 'name', ignoreRecord: true)
+                    ->rule('unique:users,name')
+                    ->validationMessages([
+                        'unique' => 'Nama sudah digunakan.',
+                    ])
                     ->maxLength(255),
                 Forms\Components\TextInput::make('email')
                     ->email()
