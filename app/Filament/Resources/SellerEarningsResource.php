@@ -75,16 +75,8 @@ class SellerEarningsResource extends Resource
                     ->money('IDR')
                     ->sortable(),
 
-                Tables\Columns\BadgeColumn::make('status')
+                Tables\Columns\TextColumn::make('status')
                     ->label('Status')
-                    ->colors([
-                        'danger' => 'unpaid',
-                        'success' => 'paid',
-                    ])
-                    ->enum([
-                        'unpaid' => 'Belum Dibayar',
-                        'paid' => 'Sudah Dibayar',
-                    ])
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('paid_at')
