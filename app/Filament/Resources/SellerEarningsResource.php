@@ -20,7 +20,15 @@ class SellerEarningsResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
     protected static ?string $navigationLabel = 'Pendapatan Penjual';
+    public static function getModelLabel(): string
+    {
+        return 'Pendapatan';
+    }
 
+    public static function getPluralModelLabel(): string
+    {
+        return 'Daftar Pendapatan';
+    }
     public static function form(Form $form): Form
     {
         return $form
