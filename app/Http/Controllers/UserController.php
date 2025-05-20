@@ -29,46 +29,63 @@ class UserController extends Controller
 
     // Update data user yang sedang login
     public function update(Request $request)
-    {
-        $user = $request->user(); // Mendapatkan data pengguna dari token Sanctum
+{
+    $user = $request->user();
+
+    if (!$user) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Unauthorized - Please login first',
+        ], 401);
+    }
+
+    $validator = Validator::make($request->all(), [
+        'name' => 'sometimes|string|max:255',
+        'email' => 'sometimes|email|max:255|unique:users,email,' . $user->id,
+        'phone' => 'sometimes|string|max:20',
+        'image' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Validation Error',
+            'errors' => $validator->errors(),
+        ], 422);
+    }
+
+    if ($request->hasFile('image')) {
+        $imageName = time().'.'.$request->image->extension();  
+        $request->image->move(public_path('images/users'), $imageName);
+        $user->image = $imageName;
+    }
+
+    $updateData = [];
+    $fields = ['name', 'email', 'phone'];
     
-        $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|max:255|unique:users,email,' . $user->id,
-            'phone' => 'sometimes|string|max:15', // tambahkan validasi untuk phone jika perlu
-        ]);
-    
-        if ($validator->fails()) {
+    foreach ($fields as $field) {
+        if ($request->has($field)) {
+            $updateData[$field] = $request->input($field);
+        }
+    }
+
+    if (!empty($updateData)) {
+        try {
+            $user->update($updateData);
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
-                'message' => 'Validation Error',
-                'errors' => $validator->errors(),
-            ], 422);
+                'message' => 'Update failed due to server error',
+            ], 500);
         }
-    
-        // Update data user
-        $updateData = [];
-        if ($request->has('name')) {
-            $updateData['name'] = $request->name;
-        }
-        if ($request->has('email')) {
-            $updateData['email'] = $request->email;
-        }
-        if ($request->has('phone')) {
-            $updateData['phone'] = $request->phone;
-        }
-    
-        // Lakukan update hanya jika ada data yang berubah
-        if (!empty($updateData)) {
-            $user->update($updateData);
-        }
-    
-        return response()->json([
-            'status' => true,
-            'message' => 'Data Berhasil DiUpdate',
-            'data' => $user->fresh(), // Mengambil data terbaru dari database
-        ], 200);
     }
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Data Berhasil DiUpdate',
+        'data' => $user->fresh(),
+    ], 200);
+}
 
 
     public function updatePassword(Request $request)
