@@ -67,8 +67,7 @@ class UserResource extends Resource
                     ->label('Konfirmasi Kata Sandi')
                     ->password()
                     ->maxLength(255)
-                    ->dehydrated(false) // tidak disimpan ke database
-                    ->visible(fn ($get) => filled($get('password'))), // hanya tampil kalau password diisi
+                    ->dehydrated(false), // tidak disimpan ke database
                        
                 Forms\Components\TextInput::make('phone')
                     ->label('No.Telefon')
