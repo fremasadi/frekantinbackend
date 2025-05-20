@@ -29,37 +29,46 @@ class UserController extends Controller
 
     // Update data user yang sedang login
     public function update(Request $request)
-{
-    $user = $request->user(); // Mendapatkan data pengguna dari token Sanctum
-
-    $validator = Validator::make($request->all(), [
-        'name' => 'sometimes|string|max:255',
-        'email' => 'sometimes|email|max:255|unique:users,email,' . $user->id,
-        // 'phone' => 'sometimes|string|max:15',
-        // Password dihapus dari validasi
-    ]);
-
-    if ($validator->fails()) {
+    {
+        $user = $request->user(); // Mendapatkan data pengguna dari token Sanctum
+    
+        $validator = Validator::make($request->all(), [
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email|max:255|unique:users,email,' . $user->id,
+            'phone' => 'sometimes|string|max:15', // tambahkan validasi untuk phone jika perlu
+        ]);
+    
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+    
+        // Update data user
+        $updateData = [];
+        if ($request->has('name')) {
+            $updateData['name'] = $request->name;
+        }
+        if ($request->has('email')) {
+            $updateData['email'] = $request->email;
+        }
+        if ($request->has('phone')) {
+            $updateData['phone'] = $request->phone;
+        }
+    
+        // Lakukan update hanya jika ada data yang berubah
+        if (!empty($updateData)) {
+            $user->update($updateData);
+        }
+    
         return response()->json([
-            'status' => false,
-            'message' => 'Validation Error',
-            'errors' => $validator->errors(),
-        ], 422);
+            'status' => true,
+            'message' => 'Data Berhasil DiUpdate',
+            'data' => $user->fresh(), // Mengambil data terbaru dari database
+        ], 200);
     }
-
-    // Update data user
-    $user->name = $request->name ?? $user->name;
-    $user->email = $request->email ?? $user->email;
-    // $user->phone = $request->phone ?? $user->phone;
-
-    $user->save();
-
-    return response()->json([
-        'status' => true,
-        'message' => 'Data Berhasil DiUpdate',
-        'data' => $user,
-    ], 200);
-}
 
 
     public function updatePassword(Request $request)
