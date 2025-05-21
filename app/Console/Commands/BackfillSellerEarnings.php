@@ -44,7 +44,7 @@ class BackfillSellerEarnings extends Command
                 ],
                 [
                     'total_income' => $total,
-                    'status' => 'unpaid',
+                    // 'status' => 'unpaid',
                 ]
             );
 
