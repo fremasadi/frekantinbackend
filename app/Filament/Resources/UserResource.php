@@ -65,10 +65,10 @@ class UserResource extends Resource
                     ->label('No.Telefon')
                     ->tel()
                     ->maxLength(255),
-                Forms\Components\FileUpload::make('image')
-                    ->placeholder('Klik pilih gambar pengguna')
-                    ->label('Foto Jika Ada')
-                    ->image(),
+                // Forms\Components\FileUpload::make('image')
+                //     ->placeholder('Klik pilih gambar pengguna')
+                //     ->label('Foto Jika Ada')
+                //     ->image(),
                     Select::make('role')
                     ->label('Peran')
                     ->required()
@@ -96,8 +96,8 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('phone')
                     ->label('No.Telefon')
                     ->searchable(),
-                Tables\Columns\ImageColumn::make('image')
-                    ->label('Foto'),
+                // Tables\Columns\ImageColumn::make('image')
+                //     ->label('Foto'),
                 Tables\Columns\TextColumn::make('role')
                     ->label('Peran')
                     ->searchable(),
