@@ -60,6 +60,7 @@ class OrderController extends Controller
         return response()->json(['status' => false, 'message' => 'Cart items not found'], 404);
     }
 
+    // Validasi nomor meja
     $tableNumber = $request->table_number;
     $table = DB::table('table_numbers')
         ->where('number', $tableNumber)
@@ -67,11 +68,19 @@ class OrderController extends Controller
         ->first();
 
     if (!$table) {
-        return response()->json(['status' => false, 'message' => 'Tuliskan Nomer Meja Dengan Benar'], 400);
+        return response()->json([
+            'status' => false,
+            'message' => 'Tuliskan Nomer Meja Dengan Benar',
+        ], 400);
     }
 
+    // Generate satu order_id untuk semua orders
     $mainOrderId = $this->generateOrderId();
-    $itemsBySeller = $cartItems->groupBy(fn($item) => $item->product->seller_id);
+
+    // Group cart items by seller_id
+    $itemsBySeller = $cartItems->groupBy(function ($item) {
+        return $item->product->seller_id;
+    });
 
     DB::beginTransaction();
 
@@ -79,16 +88,17 @@ class OrderController extends Controller
         $createdOrders = [];
         $totalAmountAll = 0;
 
+        // Buat order terpisah untuk setiap seller
         foreach ($itemsBySeller as $sellerId => $sellerItems) {
-            $sellerTotal = $this->calculateSellerTotalAmount($sellerItems);
-            $totalAmountAll += $sellerTotal;
+            $sellerTotalAmount = $this->calculateSellerTotalAmount($sellerItems);
+            $totalAmountAll += $sellerTotalAmount;
 
             $order = Order::create([
                 'customer_id' => $cart->customer_id,
                 'seller_id' => $sellerId,
                 'order_id' => $mainOrderId,
                 'order_status' => OrderStatus::PENDING->value,
-                'total_amount' => $sellerTotal,
+                'total_amount' => $sellerTotalAmount,
                 'table_number' => $tableNumber,
                 'estimated_delivery_time' => Carbon::now()->addMinutes(30),
             ]);
@@ -103,13 +113,14 @@ class OrderController extends Controller
                 ]);
             }
 
+            // Notifikasi per seller
             $this->firebaseDatabase
                 ->getReference('notifications/orders')
                 ->push([
                     'order_id' => $mainOrderId,
                     'customer_id' => $cart->customer_id,
                     'seller_id' => $sellerId,
-                    'total_amount' => $sellerTotal,
+                    'total_amount' => $sellerTotalAmount,
                     'status' => OrderStatus::PENDING->value,
                     'timestamp' => Carbon::now()->timestamp,
                 ]);
@@ -117,6 +128,7 @@ class OrderController extends Controller
             $createdOrders[] = $order;
         }
 
+        // Hapus cart items
         CartItem::where('cart_id', $cart->id)->delete();
 
         // Proses pembayaran
@@ -124,7 +136,7 @@ class OrderController extends Controller
         $bank = $request->bank;
 
         if ($paymentType === 'BANK_TRANSFER' && !$bank) {
-            return response()->json(['status' => false, 'message' => 'Bank is required'], 400);
+            return response()->json(['status' => false, 'message' => 'Bank is required for bank transfer payment'], 400);
         }
 
         $paymentGatewayResponse = $this->processPayment($paymentType, $totalAmountAll, $mainOrderId, $bank);
@@ -133,7 +145,8 @@ class OrderController extends Controller
             throw new \Exception($paymentGatewayResponse['error']);
         }
 
-        Payment::create([
+        // Buat satu payment record
+        $payment = Payment::create([
             'order_id' => $createdOrders[0]->id,
             'payment_status' => OrderStatus::PENDING->value,
             'payment_type' => $paymentType,
@@ -144,8 +157,8 @@ class OrderController extends Controller
             'payment_proof' => null,
             'payment_date' => Carbon::now(),
             'expired_at' => Carbon::now()->addHours(1),
-            'payment_va_name' => $paymentGatewayResponse['va_bank'] ?? null,
-            'payment_va_number' => $paymentGatewayResponse['va_number'] ?? null,
+            'payment_va_name' => $paymentGatewayResponse['va_bank'],
+            'payment_va_number' => $paymentGatewayResponse['va_number'],
         ]);
 
         DB::commit();
@@ -155,25 +168,30 @@ class OrderController extends Controller
             'message' => 'Order created successfully',
             'main_order_id' => $mainOrderId,
             'orders' => $createdOrders,
-        ]);
+            'payment' => $payment,
+        ], 200);
+
     } catch (\Exception $e) {
         DB::rollback();
         Log::error('Order creation failed: ' . $e->getMessage());
-        return response()->json(['status' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+        return response()->json([
+            'status' => false,
+            'message' => 'Error creating order or payment: ' . $e->getMessage(),
+        ], 500);
     }
 }
 
-// Method helper untuk menghitung total per seller
 private function calculateSellerTotalAmount($sellerItems)
 {
     $subtotal = $sellerItems->sum(function ($item) {
         return $item->product->price * $item->quantity;
     });
-    
+
     $serviceFee = 3000.00;
-    
+
     return number_format($subtotal + $serviceFee, 2, '.', '');
 }
+
 
     private function processPayment($paymentType, $totalAmount, $orderId, $bank = null)
 {
