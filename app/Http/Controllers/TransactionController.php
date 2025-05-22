@@ -31,64 +31,70 @@ class TransactionController extends Controller
      * Beserta daftar order items
      */
     public function index()
-    {
-        $sellerId = Auth::id(); // Ambil ID seller yang sedang login
+{
+    $sellerId = Auth::id(); // Ambil ID seller yang sedang login
+
+    $orders = Order::where('seller_id', $sellerId)
+        ->whereIn('order_status', ['PAID', 'COMPLETED']) // Ambil order dengan status PAID atau COMPLETED
+        ->with(['orderItems.product', 'customer', 'payment']) // Tambahkan payment juga
+        ->orderByRaw("FIELD(order_status, 'PAID', 'COMPLETED'), created_at DESC") // Urutkan PAID dulu, lalu COMPLETED berdasarkan waktu terbaru
+        ->get();
+
+    // Group orders by order_id untuk menampilkan informasi yang lebih lengkap
+    $groupedOrders = $orders->groupBy('order_id');
     
-        $orders = Order::where('seller_id', $sellerId)
-            ->whereIn('order_status', ['PAID', 'COMPLETED']) // Ambil order dengan status PAID atau COMPLETED
-            ->with(['orderItems.product', 'customer']) // Ambil order items & customer
-            ->orderByRaw("FIELD(order_status, 'PAID', 'COMPLETED'), created_at DESC") // Urutkan PAID dulu, lalu COMPLETED berdasarkan waktu terbaru
-            ->get();
-    
-        // Group orders by order_id untuk menampilkan informasi lengkap
-        $groupedOrders = $orders->groupBy('order_id');
+    $formattedOrders = $groupedOrders->map(function ($orderGroup, $orderId) {
+        // Ambil order pertama sebagai representasi grup
+        $firstOrder = $orderGroup->first();
         
-        $formattedOrders = [];
+        // Hitung total amount untuk semua orders dengan order_id yang sama
+        $totalAmountForOrderId = $orderGroup->sum('total_amount');
         
-        foreach ($groupedOrders as $orderId => $orderGroup) {
-            $firstOrder = $orderGroup->first();
-            
-            // Ambil semua order dengan order_id yang sama (dari semua seller)
-            $allRelatedOrders = Order::where('order_id', $orderId)
-                ->whereIn('order_status', ['PAID', 'COMPLETED'])
-                ->with(['orderItems.product', 'customer'])
-                ->get();
-            
-            // Combine semua order items dari semua sellers untuk order_id ini
-            $allOrderItems = collect();
-            $totalAmountAll = 0;
-            
-            foreach ($allRelatedOrders as $relatedOrder) {
-                $allOrderItems = $allOrderItems->merge($relatedOrder->orderItems);
-                $totalAmountAll += $relatedOrder->total_amount;
-            }
-            
-            // Format response
-            $formattedOrders[] = [
-                'id' => $firstOrder->id,
-                'order_id' => $firstOrder->order_id,
-                'customerName' => $firstOrder->customer ? $firstOrder->customer->name : 'Unknown',
-                'seller_id' => $sellerId, // ID seller yang login
-                'order_status' => $firstOrder->order_status,
-                'total_amount' => $totalAmountAll, // Total keseluruhan dari semua sellers
-                'seller_amount' => $orderGroup->sum('total_amount'), // Total khusus seller ini
-                'table_number' => $firstOrder->table_number,
-                'estimated_delivery_time' => $firstOrder->estimated_delivery_time,
-                'created_at' => $firstOrder->created_at,
-                'updated_at' => $firstOrder->updated_at,
-                'order_items' => $allOrderItems->values(), // Semua items dari semua sellers
-                'seller_items' => $orderGroup->pluck('orderItems')->flatten()->values(), // Items khusus seller ini
-                'related_sellers' => $allRelatedOrders->pluck('seller_id')->unique()->values(), // Daftar semua sellers terlibat
-                'sellers_count' => $allRelatedOrders->pluck('seller_id')->unique()->count(), // Jumlah sellers terlibat
-            ];
-        }
-    
-        return response()->json([
-            'status' => true,
-            'message' => 'List of successful transactions',
-            'transactions' => $formattedOrders,
-        ], 200);
-    }
+        // Gabungkan semua order items dari semua sellers untuk order_id ini
+        $allOrderItems = $orderGroup->flatMap(function ($order) {
+            return $order->orderItems;
+        });
+        
+        // Informasi sellers yang terlibat
+        $sellersInvolved = $orderGroup->pluck('seller_id')->unique()->count();
+        
+        return [
+            'id' => $firstOrder->id,
+            'order_id' => $orderId,
+            'customerName' => $firstOrder->customer ? $firstOrder->customer->name : 'Unknown',
+            'customer_id' => $firstOrder->customer_id,
+            'seller_id' => $firstOrder->seller_id,
+            'my_order_total' => $firstOrder->total_amount, // Total khusus untuk seller ini
+            'full_order_total' => $totalAmountForOrderId, // Total keseluruhan order_id
+            'order_status' => $firstOrder->order_status,
+            'table_number' => $firstOrder->table_number,
+            'estimated_delivery_time' => $firstOrder->estimated_delivery_time,
+            'created_at' => $firstOrder->created_at,
+            'updated_at' => $firstOrder->updated_at,
+            'sellers_count' => $sellersInvolved, // Berapa seller yang terlibat
+            'my_order_items' => $firstOrder->orderItems, // Items khusus untuk seller ini
+            'all_order_items' => $allOrderItems, // Semua items dalam order_id ini
+            'payment_info' => $firstOrder->payment ? [
+                'payment_status' => $firstOrder->payment->payment_status,
+                'payment_type' => $firstOrder->payment->payment_type,
+                'payment_gateway' => $firstOrder->payment->payment_gateway,
+                'gross_amount' => $firstOrder->payment->gross_amount,
+                'payment_date' => $firstOrder->payment->payment_date,
+            ] : null,
+        ];
+    })->values(); // Reset array keys
+
+    return response()->json([
+        'status' => true,
+        'message' => 'List of successful transactions',
+        'transactions' => $formattedOrders,
+        'total_transactions' => $formattedOrders->count(),
+        'seller_info' => [
+            'seller_id' => $sellerId,
+            'seller_name' => Auth::user()->name ?? 'Unknown',
+        ]
+    ], 200);
+}
     
     
 
