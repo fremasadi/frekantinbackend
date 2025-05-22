@@ -31,71 +31,38 @@ class TransactionController extends Controller
      * Beserta daftar order items
      */
     public function index()
-{
-    $sellerId = Auth::id(); // Ambil ID seller yang sedang login
-
-    $orders = Order::where('seller_id', $sellerId)
-        ->whereIn('order_status', ['PAID', 'COMPLETED']) // Ambil order dengan status PAID atau COMPLETED
-        ->with(['orderItems.product', 'customer', 'payment']) // Tambahkan payment juga
-        ->orderByRaw("FIELD(order_status, 'PAID', 'COMPLETED'), created_at DESC") // Urutkan PAID dulu, lalu COMPLETED berdasarkan waktu terbaru
-        ->get();
-
-    // Group orders by order_id untuk menampilkan informasi yang lebih lengkap
-    $groupedOrders = $orders->groupBy('order_id');
+    {
+        $sellerId = Auth::id(); // Ambil ID seller yang sedang login
     
-    $formattedOrders = $groupedOrders->map(function ($orderGroup, $orderId) {
-        // Ambil order pertama sebagai representasi grup
-        $firstOrder = $orderGroup->first();
-        
-        // Hitung total amount untuk semua orders dengan order_id yang sama
-        $totalAmountForOrderId = $orderGroup->sum('total_amount');
-        
-        // Gabungkan semua order items dari semua sellers untuk order_id ini
-        $allOrderItems = $orderGroup->flatMap(function ($order) {
-            return $order->orderItems;
+        $orders = Order::where('seller_id', $sellerId)
+            ->whereIn('order_status', ['PAID', 'COMPLETED']) // Ambil order dengan status PAID atau COMPLETED
+            ->with(['orderItems.product', 'customer']) // Ambil order items & customer
+            ->orderByRaw("FIELD(order_status, 'PAID', 'COMPLETED'), created_at DESC") // Urutkan PAID dulu, lalu COMPLETED berdasarkan waktu terbaru
+            ->get();
+    
+        // Ubah format customer_id menjadi customerName
+        $orders = $orders->map(function ($order) {
+            return [
+                'id' => $order->id,
+                'order_id' => $order->order_id,
+                'customerName' => $order->customer ? $order->customer->name : 'Unknown',
+                'seller_id' => $order->seller_id,
+                'order_status' => $order->order_status,
+                'total_amount' => $order->total_amount,
+                'table_number' => $order->table_number,
+                'estimated_delivery_time' => $order->estimated_delivery_time,
+                'created_at' => $order->created_at,
+                'updated_at' => $order->updated_at,
+                'order_items' => $order->orderItems
+            ];
         });
-        
-        // Informasi sellers yang terlibat
-        $sellersInvolved = $orderGroup->pluck('seller_id')->unique()->count();
-        
-        return [
-            'id' => $firstOrder->id,
-            'order_id' => $orderId,
-            'customerName' => $firstOrder->customer ? $firstOrder->customer->name : 'Unknown',
-            'customer_id' => $firstOrder->customer_id,
-            'seller_id' => $firstOrder->seller_id,
-            'my_order_total' => $firstOrder->total_amount, // Total khusus untuk seller ini
-            'full_order_total' => $totalAmountForOrderId, // Total keseluruhan order_id
-            'order_status' => $firstOrder->order_status,
-            'table_number' => $firstOrder->table_number,
-            'estimated_delivery_time' => $firstOrder->estimated_delivery_time,
-            'created_at' => $firstOrder->created_at,
-            'updated_at' => $firstOrder->updated_at,
-            'sellers_count' => $sellersInvolved, // Berapa seller yang terlibat
-            'my_order_items' => $firstOrder->orderItems, // Items khusus untuk seller ini
-            'all_order_items' => $allOrderItems, // Semua items dalam order_id ini
-            'payment_info' => $firstOrder->payment ? [
-                'payment_status' => $firstOrder->payment->payment_status,
-                'payment_type' => $firstOrder->payment->payment_type,
-                'payment_gateway' => $firstOrder->payment->payment_gateway,
-                'gross_amount' => $firstOrder->payment->gross_amount,
-                'payment_date' => $firstOrder->payment->payment_date,
-            ] : null,
-        ];
-    })->values(); // Reset array keys
-
-    return response()->json([
-        'status' => true,
-        'message' => 'List of successful transactions',
-        'transactions' => $formattedOrders,
-        'total_transactions' => $formattedOrders->count(),
-        'seller_info' => [
-            'seller_id' => $sellerId,
-            'seller_name' => Auth::user()->name ?? 'Unknown',
-        ]
-    ], 200);
-}
     
+        return response()->json([
+            'status' => true,
+            'message' => 'List of successful transactions',
+            'transactions' => $orders,
+        ], 200);
+    }
     
 
     /**
