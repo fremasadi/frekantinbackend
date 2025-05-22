@@ -59,13 +59,17 @@ class Order extends Model
     return $this->hasMany(OrderItem::class, 'order_id', 'id');
 }
 
+public function payment()
+{
+    return $this->hasOne(Payment::class, 'payment_gateway_reference_id', 'order_id');
+}
 
 
-    // Relasi dengan tabel Payment
-    public function payment()
-    {
-        return $this->hasOne(Payment::class);
-    }
+    // // Relasi dengan tabel Payment
+    // public function payment()
+    // {
+    //     return $this->hasOne(Payment::class);
+    // }
 
     public function setEstimatedDeliveryTimeAttribute($value)
     {

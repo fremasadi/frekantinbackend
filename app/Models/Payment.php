@@ -40,6 +40,12 @@ class Payment extends Model
         return $this->belongsTo(Order::class, 'order_id');
     }
 
+    public function orders()
+{
+    return $this->hasMany(Order::class, 'order_id', 'payment_gateway_reference_id');
+}
+
+
     // Relasi dengan tabel PaymentRefunds
     public function paymentRefunds()
     {
