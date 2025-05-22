@@ -40,29 +40,56 @@ class TransactionController extends Controller
             ->orderByRaw("FIELD(order_status, 'PAID', 'COMPLETED'), created_at DESC") // Urutkan PAID dulu, lalu COMPLETED berdasarkan waktu terbaru
             ->get();
     
-        // Ubah format customer_id menjadi customerName
-        $orders = $orders->map(function ($order) {
-            return [
-                'id' => $order->id,
-                'order_id' => $order->order_id,
-                'customerName' => $order->customer ? $order->customer->name : 'Unknown',
-                'seller_id' => $order->seller_id,
-                'order_status' => $order->order_status,
-                'total_amount' => $order->total_amount,
-                'table_number' => $order->table_number,
-                'estimated_delivery_time' => $order->estimated_delivery_time,
-                'created_at' => $order->created_at,
-                'updated_at' => $order->updated_at,
-                'order_items' => $order->orderItems
+        // Group orders by order_id untuk menampilkan informasi lengkap
+        $groupedOrders = $orders->groupBy('order_id');
+        
+        $formattedOrders = [];
+        
+        foreach ($groupedOrders as $orderId => $orderGroup) {
+            $firstOrder = $orderGroup->first();
+            
+            // Ambil semua order dengan order_id yang sama (dari semua seller)
+            $allRelatedOrders = Order::where('order_id', $orderId)
+                ->whereIn('order_status', ['PAID', 'COMPLETED'])
+                ->with(['orderItems.product', 'customer'])
+                ->get();
+            
+            // Combine semua order items dari semua sellers untuk order_id ini
+            $allOrderItems = collect();
+            $totalAmountAll = 0;
+            
+            foreach ($allRelatedOrders as $relatedOrder) {
+                $allOrderItems = $allOrderItems->merge($relatedOrder->orderItems);
+                $totalAmountAll += $relatedOrder->total_amount;
+            }
+            
+            // Format response
+            $formattedOrders[] = [
+                'id' => $firstOrder->id,
+                'order_id' => $firstOrder->order_id,
+                'customerName' => $firstOrder->customer ? $firstOrder->customer->name : 'Unknown',
+                'seller_id' => $sellerId, // ID seller yang login
+                'order_status' => $firstOrder->order_status,
+                'total_amount' => $totalAmountAll, // Total keseluruhan dari semua sellers
+                'seller_amount' => $orderGroup->sum('total_amount'), // Total khusus seller ini
+                'table_number' => $firstOrder->table_number,
+                'estimated_delivery_time' => $firstOrder->estimated_delivery_time,
+                'created_at' => $firstOrder->created_at,
+                'updated_at' => $firstOrder->updated_at,
+                'order_items' => $allOrderItems->values(), // Semua items dari semua sellers
+                'seller_items' => $orderGroup->pluck('orderItems')->flatten()->values(), // Items khusus seller ini
+                'related_sellers' => $allRelatedOrders->pluck('seller_id')->unique()->values(), // Daftar semua sellers terlibat
+                'sellers_count' => $allRelatedOrders->pluck('seller_id')->unique()->count(), // Jumlah sellers terlibat
             ];
-        });
+        }
     
         return response()->json([
             'status' => true,
             'message' => 'List of successful transactions',
-            'transactions' => $orders,
+            'transactions' => $formattedOrders,
         ], 200);
     }
+    
     
 
     /**
