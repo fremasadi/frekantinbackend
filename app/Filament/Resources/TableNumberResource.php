@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class TableNumberResource extends Resource
 {
@@ -59,14 +60,7 @@ class TableNumberResource extends Resource
                     ->searchable(),
                 Tables\Columns\IconColumn::make('status')
                     ->boolean(),
-                // Tables\Columns\TextColumn::make('created_at')
-                //     ->dateTime()
-                //     ->sortable()
-                //     ->toggleable(isToggledHiddenByDefault: true),
-                // Tables\Columns\TextColumn::make('updated_at')
-                //     ->dateTime()
-                //     ->sortable()
-                //     ->toggleable(isToggledHiddenByDefault: true),
+            
             ])
             ->filters([
                 //
@@ -74,6 +68,23 @@ class TableNumberResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+                Tables\Actions\Action::make('qrcode')
+                    ->label('QR Code')
+                    ->icon('heroicon-o-qr-code')
+                    ->action(function ($record) {
+                        $number = $record->number;
+
+                        $qr = base64_encode(QrCode::format('png')->size(200)->generate($number));
+                        $url = 'data:image/png;base64,' . $qr;
+
+                        return response()->streamDownload(function () use ($url) {
+                            echo base64_decode(str_replace('data:image/png;base64,', '', $url));
+                        }, 'qrcode_meja_' . $number . '.png');
+                    })
+                    ->requiresConfirmation()
+                    ->color('primary'),
+
+
 
             ])
             ->bulkActions([
