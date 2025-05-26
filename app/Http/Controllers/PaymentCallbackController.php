@@ -221,4 +221,38 @@ class PaymentCallbackController extends Controller
     return response()->json(['message' => 'Payment status updated']);
 }
 
+// Tambahkan method ini di PaymentCallbackController
+public function manualUpdate(Request $request)
+{
+    $orderId = $request->order_id;
+    $status = $request->status; // 'SUCCESS', 'FAILED', etc.
+    
+    $payments = Payment::where('payment_gateway_reference_id', $orderId)->get();
+    
+    if ($payments->isEmpty()) {
+        return response()->json(['message' => 'Payment not found'], 404);
+    }
+    
+    foreach ($payments as $payment) {
+        $payment->update([
+            'payment_status' => $status,
+            'payment_date' => now(),
+        ]);
+        
+        $order = $payment->order;
+        if ($order) {
+            $orderStatus = $status === 'SUCCESS' ? 'PAID' : 'CANCELLED';
+            $order->update(['order_status' => $orderStatus]);
+            
+            if ($status === 'SUCCESS') {
+                $this->sendNotificationToSeller($order, 'settlement');
+            }
+        }
+    }
+    
+    return response()->json(['message' => 'Payment status updated manually']);
+}
+
+// Route untuk manual update (tambahkan di routes/api.php)
+
 }
