@@ -66,16 +66,47 @@ class PaymentCallbackController extends Controller
 
     public function handle(Request $request)
 {
+    // Log semua request yang masuk
+    Log::info('Payment callback received', [
+        'headers' => $request->headers->all(),
+        'content' => $request->getContent(),
+        'method' => $request->method(),
+        'url' => $request->fullUrl()
+    ]);
+
     $notification = json_decode($request->getContent(), true);
     
-    $orderId = $notification['order_id'];
-    $transactionStatus = $notification['transaction_status'];
-    $fraudStatus = $notification['fraud_status'];
+    if (!$notification) {
+        Log::error('Invalid JSON in callback');
+        return response()->json(['message' => 'Invalid JSON'], 400);
+    }
+
+    $orderId = $notification['order_id'] ?? null;
+    $transactionStatus = $notification['transaction_status'] ?? null;
+    $fraudStatus = $notification['fraud_status'] ?? 'accept';
+    
+    Log::info('Processing callback', [
+        'order_id' => $orderId,
+        'transaction_status' => $transactionStatus,
+        'fraud_status' => $fraudStatus
+    ]);
+
+    if (!$orderId || !$transactionStatus) {
+        Log::error('Missing required fields in callback', $notification);
+        return response()->json(['message' => 'Missing required fields'], 400);
+    }
     
     $payments = Payment::where('payment_gateway_reference_id', $orderId)->get();
     if ($payments->isEmpty()) {
+        Log::error('Payment not found for order_id: ' . $orderId);
         return response()->json(['message' => 'Payment not found'], 404);
     }
+
+    // Log payment yang ditemukan
+    Log::info('Found payments', [
+        'count' => $payments->count(),
+        'payment_ids' => $payments->pluck('id')->toArray()
+    ]);
 
     $signatureKey = hash('sha512', 
         $orderId . 
@@ -85,8 +116,14 @@ class PaymentCallbackController extends Controller
     );
 
     if ($notification['signature_key'] !== $signatureKey) {
+        Log::error('Invalid signature', [
+            'received' => $notification['signature_key'],
+            'calculated' => $signatureKey
+        ]);
         return response()->json(['message' => 'Invalid signature'], 403);
     }
+
+    Log::info('Signature verified successfully');
 
     if ($fraudStatus == 'accept') {
         switch ($transactionStatus) {
@@ -110,24 +147,52 @@ class PaymentCallbackController extends Controller
                 $orderStatus = 'FAILED';
         }
 
+        Log::info('Status mapping', [
+            'transaction_status' => $transactionStatus,
+            'payment_status' => $paymentStatus,
+            'order_status' => $orderStatus
+        ]);
+
         foreach ($payments as $payment) {
+            $oldStatus = $payment->payment_status;
+            
             $payment->update([
                 'payment_status' => $paymentStatus,
                 'payment_date' => now(),
             ]);
 
+            Log::info('Payment updated', [
+                'payment_id' => $payment->id,
+                'old_status' => $oldStatus,
+                'new_status' => $paymentStatus
+            ]);
+
             $order = $payment->order;
             if ($order) {
+                $oldOrderStatus = $order->order_status;
+                
                 $order->update([
                     'order_status' => $orderStatus
                 ]);
 
+                Log::info('Order updated', [
+                    'order_id' => $order->id,
+                    'order_reference' => $order->order_id,
+                    'old_status' => $oldOrderStatus,
+                    'new_status' => $orderStatus
+                ]);
+
                 // Kirim notifikasi ke seller jika pembayaran berhasil
                 if ($paymentStatus === 'SUCCESS') {
+                    Log::info('Sending notification to seller for successful payment');
                     $this->sendNotificationToSeller($order, $transactionStatus);
                 }
+            } else {
+                Log::warning('Order not found for payment_id: ' . $payment->id);
             }
         }
+    } else {
+        Log::warning('Fraud status not accepted', ['fraud_status' => $fraudStatus]);
     }
 
     try {
@@ -142,6 +207,7 @@ class PaymentCallbackController extends Controller
                     'status' => $orderStatus,
                     'updated_at' => time()
                 ]);
+                Log::info('Firebase updated for order: ' . $orderId);
             }
         } else {
             Log::warning("Order $orderId not found in Firebase");
@@ -151,6 +217,7 @@ class PaymentCallbackController extends Controller
         return response()->json(['message' => 'Error updating Firebase'], 500);
     }
 
+    Log::info('Callback processed successfully for order: ' . $orderId);
     return response()->json(['message' => 'Payment status updated']);
 }
 
