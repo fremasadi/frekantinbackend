@@ -245,26 +245,27 @@ private function processPayment($paymentType, $totalAmount, $orderId, $bank = nu
         'custom_expiry' => $custom_expiry,
     ];
 
-    // Set payment method berdasarkan payment type
-    switch ($paymentType) {
-        case 'BANK_TRANSFER':
-            $transaction_data['payment_type'] = 'bank_transfer';
-            $transaction_data['bank_transfer'] = [
-                'bank' => strtolower($bank)
-            ];
-            break;
-        
-        case 'QRIS':
-            $transaction_data['payment_type'] = 'qris';
-            break;
-        
-        case 'GOPAY':
-            $transaction_data['payment_type'] = 'gopay';
-            break;
-        
-        default:
-            return ['error' => 'Unsupported payment type: ' . $paymentType];
+    // Set payment method berdasarkan payment type - menggunakan struktur yang lebih sederhana
+    if ($paymentType === 'BANK_TRANSFER') {
+        $transaction_data['payment_type'] = 'bank_transfer';
+        $transaction_data['bank_transfer'] = [
+            'bank' => strtolower($bank)
+        ];
+    } elseif ($paymentType === 'QRIS') {
+        $transaction_data['payment_type'] = 'qris';
+    } elseif ($paymentType === 'GOPAY') {
+        $transaction_data['payment_type'] = 'gopay';
+    } else {
+        return ['error' => 'Unsupported payment type: ' . $paymentType];
     }
+
+    // Log transaction data untuk debugging
+    Log::info('Midtrans Transaction Data', [
+        'payment_type' => $paymentType,
+        'order_id' => $orderId,
+        'gross_amount' => $totalAmount,
+        'transaction_data' => $transaction_data
+    ]);
 
     try {
         $response = CoreApi::charge($transaction_data);
