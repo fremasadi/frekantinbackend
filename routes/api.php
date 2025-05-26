@@ -49,7 +49,7 @@ Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::post('payment/callback', [PaymentCallbackController::class, 'handle']);
-Route::post('/payment/manual-update', [PaymentCallbackController::class, 'manualUpdate']);
+// Route::post('/payment/manual-update', [PaymentCallbackController::class, 'manualUpdate']);
 
 
 
