@@ -220,15 +220,16 @@ private function processPayment($paymentType, $amount, $orderId, $bank = null)
         ];
 
         if ($paymentType === 'BANK_TRANSFER') {
-            $va = $response->va_numbers[0] ?? null;
-            $result['va_bank'] = $va->bank ?? null;
-            $result['va_number'] = $va->va_number ?? null;
+            $paymentData['payment_va_name'] = $paymentGatewayResponse['va_bank'] ?? null;
+            $paymentData['payment_va_number'] = $paymentGatewayResponse['va_number'] ?? null;
         } elseif ($paymentType === 'GOPAY') {
-            $result['qr_url'] = $response->actions[0]->url ?? null;
-            $result['deeplink_url'] = $response->actions[1]->url ?? null;
+            $paymentData['payment_qr_url'] = $paymentGatewayResponse['qr_url'] ?? null;
+            $paymentData['payment_deeplink'] = $paymentGatewayResponse['deeplink_url'] ?? null;
         } elseif ($paymentType === 'QRIS') {
-            $result['qr_url'] = $response->actions[0]->url ?? null;
+            $paymentData['payment_qr_url'] = $paymentGatewayResponse['qr_url'] ?? null;
+            $paymentData['payment_deeplink'] = null;  // QRIS memang gak ada deeplink
         }
+        
         
 
         return $result;
