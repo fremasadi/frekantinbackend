@@ -60,15 +60,27 @@ class OrderController extends Controller
         return response()->json(['status' => false, 'message' => 'Cart items not found'], 404);
     }
 
+    // Validasi nomor meja
     $tableNumber = $request->table_number;
-    $table = DB::table('table_numbers')->where('number', $tableNumber)->where('status', 1)->first();
+    $table = DB::table('table_numbers')
+        ->where('number', $tableNumber)
+        ->where('status', 1)
+        ->first();
 
     if (!$table) {
-        return response()->json(['status' => false, 'message' => 'Tuliskan Nomer Meja Dengan Benar'], 400);
+        return response()->json([
+            'status' => false,
+            'message' => 'Tuliskan Nomer Meja Dengan Benar',
+        ], 400);
     }
 
+    // Generate satu order_id untuk semua orders
     $mainOrderId = $this->generateOrderId();
-    $itemsBySeller = $cartItems->groupBy(fn ($item) => $item->product->seller_id);
+
+    // Group cart items by seller_id
+    $itemsBySeller = $cartItems->groupBy(function ($item) {
+        return $item->product->seller_id;
+    });
 
     DB::beginTransaction();
 
@@ -76,6 +88,7 @@ class OrderController extends Controller
         $createdOrders = [];
         $totalAmountAll = 0;
 
+        // Buat order terpisah untuk setiap seller
         foreach ($itemsBySeller as $sellerId => $sellerItems) {
             $sellerTotalAmount = $this->calculateSellerTotalAmount($sellerItems);
             $totalAmountAll += $sellerTotalAmount;
@@ -100,40 +113,40 @@ class OrderController extends Controller
                 ]);
             }
 
-            $this->firebaseDatabase->getReference('notifications/orders')->push([
-                'order_id' => $mainOrderId,
-                'customer_id' => $cart->customer_id,
-                'seller_id' => $sellerId,
-                'total_amount' => $sellerTotalAmount,
-                'status' => OrderStatus::PENDING->value,
-                'timestamp' => Carbon::now()->timestamp,
-            ]);
+            // Notifikasi per seller
+            $this->firebaseDatabase
+                ->getReference('notifications/orders')
+                ->push([
+                    'order_id' => $mainOrderId,
+                    'customer_id' => $cart->customer_id,
+                    'seller_id' => $sellerId,
+                    'total_amount' => $sellerTotalAmount,
+                    'status' => OrderStatus::PENDING->value,
+                    'timestamp' => Carbon::now()->timestamp,
+                ]);
 
             $createdOrders[] = $order;
         }
 
+        // Hapus cart items
         CartItem::where('cart_id', $cart->id)->delete();
 
-        // ✅ Validasi pembayaran
+        // Proses pembayaran
         $paymentType = $request->payment_type;
         $bank = $request->bank;
 
+        // Validasi berdasarkan payment type
         if ($paymentType === 'BANK_TRANSFER' && !$bank) {
             return response()->json(['status' => false, 'message' => 'Bank is required for bank transfer payment'], 400);
         }
 
-        if (!in_array($paymentType, ['BANK_TRANSFER', 'GOPAY', 'QRIS'])) {
-            return response()->json(['status' => false, 'message' => 'Unsupported payment type'], 400);
-        }
-
-        // ✅ Proses ke payment gateway
         $paymentGatewayResponse = $this->processPayment($paymentType, $totalAmountAll, $mainOrderId, $bank);
 
         if (isset($paymentGatewayResponse['error'])) {
             throw new \Exception($paymentGatewayResponse['error']);
         }
 
-        // ✅ Simpan ke tabel Payment
+        // Buat satu payment record dengan data yang sesuai payment type
         $paymentData = [
             'order_id' => $createdOrders[0]->id,
             'payment_status' => OrderStatus::PENDING->value,
@@ -147,14 +160,20 @@ class OrderController extends Controller
             'expired_at' => Carbon::now()->addHours(1),
         ];
 
-        if ($paymentType === 'BANK_TRANSFER') {
-            $paymentData['payment_va_name'] = $paymentGatewayResponse['va_bank'] ?? null;
-            $paymentData['payment_va_number'] = $paymentGatewayResponse['va_number'] ?? null;
-        } elseif (in_array($paymentType, ['GOPAY', 'QRIS'])) {
-            $paymentData['payment_va_name'] = null;
-            $paymentData['payment_va_number'] = null;
-            $paymentData['payment_qr_url'] = $paymentGatewayResponse['qr_url'] ?? null;
-            $paymentData['payment_deeplink'] = $paymentGatewayResponse['deeplink_url'] ?? null;
+        // Set field berdasarkan payment type
+        switch ($paymentType) {
+            case 'BANK_TRANSFER':
+                $paymentData['payment_va_name'] = $paymentGatewayResponse['va_bank'];
+                $paymentData['payment_va_number'] = $paymentGatewayResponse['va_number'];
+                break;
+            case 'QRIS':
+                $paymentData['payment_qr_url'] = $paymentGatewayResponse['qr_string'];
+                break;
+            case 'GOPAY':
+                $paymentData['payment_ewallet'] = 'gopay';
+                $paymentData['payment_qr_url'] = $paymentGatewayResponse['qr_string'];
+                $paymentData['payment_deeplink'] = $paymentGatewayResponse['deeplink_redirect_url'];
+                break;
         }
 
         $payment = Payment::create($paymentData);
@@ -172,10 +191,12 @@ class OrderController extends Controller
     } catch (\Exception $e) {
         DB::rollback();
         Log::error('Order creation failed: ' . $e->getMessage());
-        return response()->json(['status' => false, 'message' => 'Error creating order or payment: ' . $e->getMessage()], 500);
+        return response()->json([
+            'status' => false,
+            'message' => 'Error creating order or payment: ' . $e->getMessage(),
+        ], 500);
     }
 }
-
 
 private function calculateSellerTotalAmount($sellerItems)
 {
@@ -188,57 +209,113 @@ private function calculateSellerTotalAmount($sellerItems)
     return number_format($subtotal + $serviceFee, 2, '.', '');
 }
 
-
-private function processPayment($paymentType, $amount, $orderId, $bank = null)
+private function processPayment($paymentType, $totalAmount, $orderId, $bank = null)
 {
+    $transaction_details = [
+        'order_id' => $orderId,
+        'gross_amount' => $totalAmount,
+    ];
+
+    $item_details = [
+        [
+            'id' => 'item-1',
+            'price' => $totalAmount,
+            'quantity' => 1,
+            'name' => 'Order #' . $orderId,
+        ]
+    ];
+
+    $customer_details = [
+        'first_name' => auth()->user()->name,
+        'email' => auth()->user()->email,
+        'phone' => auth()->user()->phone ?? 'N/A',
+    ];
+
+    // Add custom expiry
+    $custom_expiry = [
+        'expiry_duration' => 1,
+        'unit' => 'hour',
+    ];
+
+    // Base transaction data
+    $transaction_data = [
+        'transaction_details' => $transaction_details,
+        'item_details' => $item_details,
+        'customer_details' => $customer_details,
+        'custom_expiry' => $custom_expiry,
+    ];
+
+    // Set payment method berdasarkan payment type
+    switch ($paymentType) {
+        case 'BANK_TRANSFER':
+            $transaction_data['payment_type'] = 'bank_transfer';
+            $transaction_data['bank_transfer'] = [
+                'bank' => strtolower($bank)
+            ];
+            break;
+        
+        case 'QRIS':
+            $transaction_data['payment_type'] = 'qris';
+            break;
+        
+        case 'GOPAY':
+            $transaction_data['payment_type'] = 'gopay';
+            break;
+        
+        default:
+            return ['error' => 'Unsupported payment type: ' . $paymentType];
+    }
+
     try {
-        $params = [
-            'transaction_details' => [
-                'order_id' => $orderId,
-                'gross_amount' => $amount,
-            ],
-            'customer_details' => [
-                'first_name' => auth()->user()->name,
-                'email' => auth()->user()->email,
-            ],
-        ];
-
-        if ($paymentType === 'BANK_TRANSFER') {
-            $params['payment_type'] = 'bank_transfer';
-            $params['bank_transfer'] = ['bank' => $bank];
-        } elseif ($paymentType === 'GOPAY') {
-            $params['payment_type'] = 'gopay';
-            $params['gopay'] = ['enable_callback' => true, 'callback_url' => 'yourapp://callback'];
-        } elseif ($paymentType === 'QRIS') {
-            $params['payment_type'] = 'qris';
-        }
-
-        $response = \Midtrans\CoreApi::charge($params);
+        $response = CoreApi::charge($transaction_data);
 
         $result = [
             'response' => $response,
+            'va_bank' => null,
+            'va_number' => null,
+            'qr_string' => null,
+            'deeplink_redirect_url' => null,
         ];
 
-        if ($paymentType === 'BANK_TRANSFER') {
-            $paymentData['payment_va_name'] = $paymentGatewayResponse['va_bank'] ?? null;
-            $paymentData['payment_va_number'] = $paymentGatewayResponse['va_number'] ?? null;
-        } elseif ($paymentType === 'GOPAY') {
-            $paymentData['payment_qr_url'] = $paymentGatewayResponse['qr_url'] ?? null;
-            $paymentData['payment_deeplink'] = $paymentGatewayResponse['deeplink_url'] ?? null;
-        } elseif ($paymentType === 'QRIS') {
-            $paymentData['payment_qr_url'] = $paymentGatewayResponse['qr_url'] ?? null;
-            $paymentData['payment_deeplink'] = null;  // QRIS memang gak ada deeplink
+        // Handle response berdasarkan payment type
+        if ($response->payment_type === 'bank_transfer') {
+            // Handle VA numbers
+            if (isset($response->va_numbers) && !empty($response->va_numbers)) {
+                $result['va_bank'] = $response->va_numbers[0]->bank;
+                $result['va_number'] = $response->va_numbers[0]->va_number;
+            } elseif (isset($response->permata_va_number)) {
+                $result['va_bank'] = 'permata';
+                $result['va_number'] = $response->permata_va_number;
+            }
+        } elseif ($response->payment_type === 'qris') {
+            // Handle QRIS
+            if (isset($response->actions)) {
+                foreach ($response->actions as $action) {
+                    if ($action->name === 'generate-qr-code') {
+                        $result['qr_string'] = $action->url;
+                        break;
+                    }
+                }
+            }
+        } elseif ($response->payment_type === 'gopay') {
+            // Handle GoPay
+            if (isset($response->actions)) {
+                foreach ($response->actions as $action) {
+                    if ($action->name === 'generate-qr-code') {
+                        $result['qr_string'] = $action->url;
+                    } elseif ($action->name === 'deeplink-redirect') {
+                        $result['deeplink_redirect_url'] = $action->url;
+                    }
+                }
+            }
         }
-        
-        
 
         return $result;
-
     } catch (\Exception $e) {
-        return ['error' => $e->getMessage()];
+        Log::error('Midtrans payment processing failed: ' . $e->getMessage());
+        return ['error' => 'Payment processing failed: ' . $e->getMessage()];
     }
 }
-
 
 
     private function calculateTotalAmount($cartId)
