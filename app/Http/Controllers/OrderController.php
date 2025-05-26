@@ -193,7 +193,8 @@ private function calculateSellerTotalAmount($sellerItems)
 }
 
 
-    private function processPayment($paymentType, $totalAmount, $orderId, $bank = null)
+
+private function processPayment($paymentType, $totalAmount, $orderId, $bank = null)
 {
     $transaction_details = [
         'order_id' => $orderId,
@@ -215,53 +216,62 @@ private function calculateSellerTotalAmount($sellerItems)
         'phone' => auth()->user()->phone ?? 'N/A',
     ];
 
-    // Add custom expiry
-    $custom_expiry = [
-        'expiry_duration' => 1, // Duration in hours
-        'unit' => 'hour', // Units can be 'minute', 'hour', or 'day'
-    ];
-
+    // Snap transaction data
     $transaction_data = [
-        'payment_type' => 'bank_transfer',
         'transaction_details' => $transaction_details,
         'item_details' => $item_details,
         'customer_details' => $customer_details,
-        'custom_expiry' => $custom_expiry, // Add this line
+        'expiry' => [
+            'duration' => 1,
+            'unit' => 'hour'
+        ],
+        // Opsional: bisa set payment methods yang diinginkan
+        'enabled_payments' => [
+            'credit_card', 'gopay', 'shopeepay', 'other_qris', 
+            'bca_va', 'bni_va', 'bri_va', 'mandiri_va', 'permata_va',
+            'other_va', 'alfamart', 'indomaret'
+        ],
+        'callbacks' => [
+            'finish' => url('/payment/finish'),
+        ]
     ];
 
-    if ($paymentType === 'BANK_TRANSFER') {
-        $transaction_data['bank_transfer'] = [
-            'bank' => strtolower($bank)
-        ];
-    }
-
     try {
-        $response = CoreApi::charge($transaction_data);
+        // Gunakan Snap API untuk mendapatkan snap_token
+        $snapToken = \Midtrans\Snap::getSnapToken($transaction_data);
 
         $result = [
-            'response' => $response,
-            'va_bank' => null,
-            'va_number' => null,
-            'redirect_url' => null
+            'snap_token' => $snapToken,
+            'snap_url' => 'https://app.sandbox.midtrans.com/snap/v2/vtweb/' . $snapToken,
+            'response' => [
+                'transaction_details' => $transaction_details,
+                'snap_token' => $snapToken
+            ]
         ];
-
-        if ($response->payment_type === 'bank_transfer') {
-            if (isset($response->va_numbers) && !empty($response->va_numbers)) {
-                $result['va_bank'] = $response->va_numbers[0]->bank;
-                $result['va_number'] = $response->va_numbers[0]->va_number;
-            } elseif (isset($response->permata_va_number)) {
-                $result['va_bank'] = 'permata';
-                $result['va_number'] = $response->permata_va_number;
-            }
-        }
 
         return $result;
     } catch (\Exception $e) {
-        Log::error('Midtrans payment processing failed: ' . $e->getMessage());
+        Log::error('Midtrans Snap processing failed: ' . $e->getMessage());
         return ['error' => 'Payment processing failed: ' . $e->getMessage()];
     }
-}
 
+
+// Update Payment record creation
+$payment = Payment::create([
+    'order_id' => $createdOrders[0]->id,
+    'payment_status' => OrderStatus::PENDING->value,
+    'payment_type' => 'SNAP', // Ubah ke SNAP
+    'payment_gateway' => 'midtrans',
+    'payment_gateway_reference_id' => $mainOrderId,
+    'payment_gateway_response' => json_encode($paymentGatewayResponse['response']),
+    'gross_amount' => $totalAmountAll,
+    'payment_proof' => null,
+    'payment_date' => Carbon::now(),
+    'expired_at' => Carbon::now()->addHours(1),
+    'snap_token' => $paymentGatewayResponse['snap_token'], // Tambah snap_token
+    'snap_url' => $paymentGatewayResponse['snap_url'], // Tambah snap_url
+]);
+}
 
     private function calculateTotalAmount($cartId)
 {
