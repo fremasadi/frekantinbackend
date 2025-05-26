@@ -24,7 +24,9 @@ class Payment extends Model
         'expired_at',
         'payment_va_name',      // Kolom baru
         'payment_va_number',    // Kolom baru
-        'payment_ewallet',      // Kolom baru
+        'payment_ewallet',    // Kolom baru
+        'payment_qr_url',
+        'payment_deeplink'
     ];
 
     protected $casts = [
