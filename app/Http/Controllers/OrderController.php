@@ -220,15 +220,16 @@ private function processPayment($paymentType, $amount, $orderId, $bank = null)
         ];
 
         if ($paymentType === 'BANK_TRANSFER') {
-            $va = $response['va_numbers'][0] ?? [];
-            $result['va_bank'] = $va['bank'] ?? null;
-            $result['va_number'] = $va['va_number'] ?? null;
+            $va = $response->va_numbers[0] ?? null;
+            $result['va_bank'] = $va->bank ?? null;
+            $result['va_number'] = $va->va_number ?? null;
         } elseif ($paymentType === 'GOPAY') {
-            $result['qr_url'] = $response['actions'][0]['url'] ?? null;
-            $result['deeplink_url'] = $response['actions'][1]['url'] ?? null;
+            $result['qr_url'] = $response->actions[0]->url ?? null;
+            $result['deeplink_url'] = $response->actions[1]->url ?? null;
         } elseif ($paymentType === 'QRIS') {
-            $result['qr_url'] = $response['actions'][0]['url'] ?? null;
+            $result['qr_url'] = $response->actions[0]->url ?? null;
         }
+        
 
         return $result;
 
