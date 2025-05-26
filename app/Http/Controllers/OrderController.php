@@ -135,7 +135,6 @@ class OrderController extends Controller
         $paymentType = $request->payment_type;
         $bank = $request->bank;
 
-        // Validasi berdasarkan payment type
         if ($paymentType === 'BANK_TRANSFER' && !$bank) {
             return response()->json(['status' => false, 'message' => 'Bank is required for bank transfer payment'], 400);
         }
@@ -146,8 +145,8 @@ class OrderController extends Controller
             throw new \Exception($paymentGatewayResponse['error']);
         }
 
-        // Buat satu payment record dengan data yang sesuai payment type
-        $paymentData = [
+        // Buat satu payment record
+        $payment = Payment::create([
             'order_id' => $createdOrders[0]->id,
             'payment_status' => OrderStatus::PENDING->value,
             'payment_type' => $paymentType,
@@ -158,25 +157,9 @@ class OrderController extends Controller
             'payment_proof' => null,
             'payment_date' => Carbon::now(),
             'expired_at' => Carbon::now()->addHours(1),
-        ];
-
-        // Set field berdasarkan payment type
-        switch ($paymentType) {
-            case 'BANK_TRANSFER':
-                $paymentData['payment_va_name'] = $paymentGatewayResponse['va_bank'];
-                $paymentData['payment_va_number'] = $paymentGatewayResponse['va_number'];
-                break;
-            case 'QRIS':
-                $paymentData['payment_qr_url'] = $paymentGatewayResponse['qr_string'];
-                break;
-            case 'GOPAY':
-                $paymentData['payment_ewallet'] = 'gopay';
-                $paymentData['payment_qr_url'] = $paymentGatewayResponse['qr_string'];
-                $paymentData['payment_deeplink'] = $paymentGatewayResponse['deeplink_redirect_url'];
-                break;
-        }
-
-        $payment = Payment::create($paymentData);
+            'payment_va_name' => $paymentGatewayResponse['va_bank'],
+            'payment_va_number' => $paymentGatewayResponse['va_number'],
+        ]);
 
         DB::commit();
 
@@ -209,7 +192,8 @@ private function calculateSellerTotalAmount($sellerItems)
     return number_format($subtotal + $serviceFee, 2, '.', '');
 }
 
-private function processPayment($paymentType, $totalAmount, $orderId, $bank = null)
+
+    private function processPayment($paymentType, $totalAmount, $orderId, $bank = null)
 {
     $transaction_details = [
         'order_id' => $orderId,
@@ -233,39 +217,23 @@ private function processPayment($paymentType, $totalAmount, $orderId, $bank = nu
 
     // Add custom expiry
     $custom_expiry = [
-        'expiry_duration' => 1,
-        'unit' => 'hour',
+        'expiry_duration' => 1, // Duration in hours
+        'unit' => 'hour', // Units can be 'minute', 'hour', or 'day'
     ];
 
-    // Base transaction data
     $transaction_data = [
+        'payment_type' => 'bank_transfer',
         'transaction_details' => $transaction_details,
         'item_details' => $item_details,
         'customer_details' => $customer_details,
-        'custom_expiry' => $custom_expiry,
+        'custom_expiry' => $custom_expiry, // Add this line
     ];
 
-    // Set payment method berdasarkan payment type - menggunakan struktur yang lebih sederhana
     if ($paymentType === 'BANK_TRANSFER') {
-        $transaction_data['payment_type'] = 'bank_transfer';
         $transaction_data['bank_transfer'] = [
             'bank' => strtolower($bank)
         ];
-    } elseif ($paymentType === 'QRIS') {
-        $transaction_data['payment_type'] = 'qris';
-    } elseif ($paymentType === 'GOPAY') {
-        $transaction_data['payment_type'] = 'gopay';
-    } else {
-        return ['error' => 'Unsupported payment type: ' . $paymentType];
     }
-
-    // Log transaction data untuk debugging
-    Log::info('Midtrans Transaction Data', [
-        'payment_type' => $paymentType,
-        'order_id' => $orderId,
-        'gross_amount' => $totalAmount,
-        'transaction_data' => $transaction_data
-    ]);
 
     try {
         $response = CoreApi::charge($transaction_data);
@@ -274,40 +242,16 @@ private function processPayment($paymentType, $totalAmount, $orderId, $bank = nu
             'response' => $response,
             'va_bank' => null,
             'va_number' => null,
-            'qr_string' => null,
-            'deeplink_redirect_url' => null,
+            'redirect_url' => null
         ];
 
-        // Handle response berdasarkan payment type
         if ($response->payment_type === 'bank_transfer') {
-            // Handle VA numbers
             if (isset($response->va_numbers) && !empty($response->va_numbers)) {
                 $result['va_bank'] = $response->va_numbers[0]->bank;
                 $result['va_number'] = $response->va_numbers[0]->va_number;
             } elseif (isset($response->permata_va_number)) {
                 $result['va_bank'] = 'permata';
                 $result['va_number'] = $response->permata_va_number;
-            }
-        } elseif ($response->payment_type === 'qris') {
-            // Handle QRIS
-            if (isset($response->actions)) {
-                foreach ($response->actions as $action) {
-                    if ($action->name === 'generate-qr-code') {
-                        $result['qr_string'] = $action->url;
-                        break;
-                    }
-                }
-            }
-        } elseif ($response->payment_type === 'gopay') {
-            // Handle GoPay
-            if (isset($response->actions)) {
-                foreach ($response->actions as $action) {
-                    if ($action->name === 'generate-qr-code') {
-                        $result['qr_string'] = $action->url;
-                    } elseif ($action->name === 'deeplink-redirect') {
-                        $result['deeplink_redirect_url'] = $action->url;
-                    }
-                }
             }
         }
 
