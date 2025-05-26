@@ -225,34 +225,96 @@ class PaymentCallbackController extends Controller
 public function manualUpdate(Request $request)
 {
     $orderId = $request->order_id;
-    $status = $request->status; // 'SUCCESS', 'FAILED', etc.
+    $transactionStatus = $request->transaction_status ?? 'settlement'; // default settlement untuk sukses
+    
+    // Validasi input
+    if (!$orderId) {
+        return response()->json(['error' => 'order_id is required'], 400);
+    }
     
     $payments = Payment::where('payment_gateway_reference_id', $orderId)->get();
     
     if ($payments->isEmpty()) {
-        return response()->json(['message' => 'Payment not found'], 404);
+        return response()->json(['error' => 'Payment not found for order_id: ' . $orderId], 404);
     }
     
+    // Map transaction status ke payment status
+    switch ($transactionStatus) {
+        case 'capture':
+        case 'settlement':
+            $paymentStatus = 'SUCCESS';
+            $orderStatus = 'PAID';
+            break;
+        case 'pending':
+            $paymentStatus = 'PENDING';
+            $orderStatus = 'PENDING';
+            break;
+        case 'deny':
+        case 'expire':
+        case 'cancel':
+            $paymentStatus = 'FAILED';
+            $orderStatus = 'CANCELLED';
+            break;
+        default:
+            return response()->json(['error' => 'Invalid transaction_status. Use: settlement, pending, cancel, expire, deny'], 400);
+    }
+    
+    \Log::info('Manual update started', [
+        'order_id' => $orderId,
+        'transaction_status' => $transactionStatus,
+        'payment_status' => $paymentStatus,
+        'order_status' => $orderStatus,
+        'payments_count' => $payments->count()
+    ]);
+    
     foreach ($payments as $payment) {
-        $payment->update([
-            'payment_status' => $status,
-            'payment_date' => now(),
-        ]);
-        
-        $order = $payment->order;
-        if ($order) {
-            $orderStatus = $status === 'SUCCESS' ? 'PAID' : 'CANCELLED';
-            $order->update(['order_status' => $orderStatus]);
+        try {
+            \Log::info('Updating payment', [
+                'payment_id' => $payment->id,
+                'old_status' => $payment->payment_status,
+                'new_status' => $paymentStatus
+            ]);
             
-            if ($status === 'SUCCESS') {
-                $this->sendNotificationToSeller($order, 'settlement');
+            $payment->update([
+                'payment_status' => $paymentStatus,
+                'payment_date' => now(),
+            ]);
+            
+            $order = $payment->order;
+            if ($order) {
+                \Log::info('Updating order', [
+                    'order_id' => $order->id,
+                    'order_reference' => $order->order_id,
+                    'old_status' => $order->order_status,
+                    'new_status' => $orderStatus
+                ]);
+                
+                $order->update(['order_status' => $orderStatus]);
+                
+                if ($paymentStatus === 'SUCCESS') {
+                    $this->sendNotificationToSeller($order, $transactionStatus);
+                }
             }
+        } catch (\Exception $e) {
+            \Log::error('Error updating payment/order', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage()
+            ]);
+            return response()->json(['error' => 'Update failed: ' . $e->getMessage()], 500);
         }
     }
     
-    return response()->json(['message' => 'Payment status updated manually']);
+    return response()->json([
+        'success' => true,
+        'message' => 'Payment status updated manually',
+        'order_id' => $orderId,
+        'payment_status' => $paymentStatus,
+        'order_status' => $orderStatus,
+        'updated_payments' => $payments->count()
+    ]);
 }
 
 // Route untuk manual update (tambahkan di routes/api.php)
+// Route::post('/payment/manual-update', [PaymentCallbackController::class, 'manualUpdate']);
 
 }
