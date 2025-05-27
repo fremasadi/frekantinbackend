@@ -159,6 +159,8 @@ class OrderController extends Controller
             'expired_at' => Carbon::now()->addHours(1),
             'payment_va_name' => $paymentGatewayResponse['va_bank'],
             'payment_va_number' => $paymentGatewayResponse['va_number'],
+            'payment_qr_url' => $paymentGatewayResponse['qr_string'], // Added for QRIS
+            'payment_deeplink' => $paymentGatewayResponse['deeplink_redirect'], // Added for GoPay
         ]);
 
         DB::commit();
@@ -193,7 +195,7 @@ private function calculateSellerTotalAmount($sellerItems)
 }
 
 
-    private function processPayment($paymentType, $totalAmount, $orderId, $bank = null)
+private function processPayment($paymentType, $totalAmount, $orderId, $bank = null)
 {
     $transaction_details = [
         'order_id' => $orderId,
@@ -221,18 +223,34 @@ private function calculateSellerTotalAmount($sellerItems)
         'unit' => 'hour', // Units can be 'minute', 'hour', or 'day'
     ];
 
+    // Base transaction data
     $transaction_data = [
-        'payment_type' => 'bank_transfer',
         'transaction_details' => $transaction_details,
         'item_details' => $item_details,
         'customer_details' => $customer_details,
-        'custom_expiry' => $custom_expiry, // Add this line
+        'custom_expiry' => $custom_expiry,
     ];
 
-    if ($paymentType === 'BANK_TRANSFER') {
-        $transaction_data['bank_transfer'] = [
-            'bank' => strtolower($bank)
-        ];
+    // Set payment method based on type
+    switch ($paymentType) {
+        case 'BANK_TRANSFER':
+            $transaction_data['payment_type'] = 'bank_transfer';
+            $transaction_data['bank_transfer'] = [
+                'bank' => strtolower($bank)
+            ];
+            break;
+            
+        case 'QRIS':
+            $transaction_data['payment_type'] = 'qris';
+            break;
+            
+        case 'GOPAY':
+            $transaction_data['payment_type'] = 'gopay';
+            break;
+            
+        default:
+            $transaction_data['payment_type'] = 'bank_transfer';
+            break;
     }
 
     try {
@@ -242,9 +260,12 @@ private function calculateSellerTotalAmount($sellerItems)
             'response' => $response,
             'va_bank' => null,
             'va_number' => null,
-            'redirect_url' => null
+            'redirect_url' => null,
+            'qr_string' => null,
+            'deeplink_redirect' => null
         ];
 
+        // Handle different payment types response
         if ($response->payment_type === 'bank_transfer') {
             if (isset($response->va_numbers) && !empty($response->va_numbers)) {
                 $result['va_bank'] = $response->va_numbers[0]->bank;
@@ -252,6 +273,27 @@ private function calculateSellerTotalAmount($sellerItems)
             } elseif (isset($response->permata_va_number)) {
                 $result['va_bank'] = 'permata';
                 $result['va_number'] = $response->permata_va_number;
+            }
+        } elseif ($response->payment_type === 'qris') {
+            // Handle QRIS response
+            if (isset($response->actions)) {
+                foreach ($response->actions as $action) {
+                    if ($action->name === 'generate-qr-code') {
+                        $result['qr_string'] = $action->url;
+                        break;
+                    }
+                }
+            }
+        } elseif ($response->payment_type === 'gopay') {
+            // Handle GoPay response
+            if (isset($response->actions)) {
+                foreach ($response->actions as $action) {
+                    if ($action->name === 'generate-qr-code') {
+                        $result['qr_string'] = $action->url;
+                    } elseif ($action->name === 'deeplink-redirect') {
+                        $result['deeplink_redirect'] = $action->url;
+                    }
+                }
             }
         }
 
