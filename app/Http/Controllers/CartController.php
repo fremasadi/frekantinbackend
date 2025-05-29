@@ -89,6 +89,8 @@ class CartController extends Controller
                 'cart_id' => $cart->id,
                 'product_id' => $request->product_id,
                 'quantity' => $request->quantity,
+                'notes' => $request->notes ?? null,
+
             ]);
         }
 
