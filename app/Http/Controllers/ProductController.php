@@ -14,43 +14,38 @@ class ProductController extends Controller
 {
    // Menampilkan semua produk yang is_active = true
    public function index()
-   {
-       $products = Product::where('is_active', true) // Hanya produk aktif
-           ->with(['seller', 'category'])
-           ->get()
-           ->map(function ($product) {
-               // Menambahkan URL lengkap untuk gambar produk
-               if ($product->image) {
-                   // Cek apakah gambar sudah memiliki URL lengkap
-                   if (!str_starts_with($product->image, 'http')) {
-                       $product->image = url('storage/' . $product->image);
-                   }
-               }
-   
-               // Menambahkan URL lengkap untuk gambar penjual
-               if ($product->seller && $product->seller->image) {
-                   // Cek apakah gambar penjual sudah memiliki URL lengkap
-                   if (!str_starts_with($product->seller->image, 'http')) {
-                       $product->seller->image = url('storage/' . $product->seller->image);
-                   }
-               }
-   
-               // Menambahkan URL lengkap untuk gambar kategori
-               if ($product->category && $product->category->image) {
-                   // Cek apakah gambar kategori sudah memiliki URL lengkap
-                   if (!str_starts_with($product->category->image, 'http')) {
-                       $product->category->image = url('storage/' . $product->category->image);
-                   }
-               }
-   
-               return $product;
-           });
-   
-       return response()->json([
-           'status' => true,
-           'data' => $products
-       ]);
-   }
+{
+    $products = Product::where('is_active', true) // Hanya produk aktif
+        ->with(['seller', 'category'])
+        ->get()
+        ->map(function ($product) {
+            // Menambahkan URL lengkap untuk gambar produk
+            if ($product->image && !str_starts_with($product->image, 'http')) {
+                $product->image = url('storage/' . $product->image);
+            }
+
+            // Menambahkan URL lengkap untuk gambar penjual
+            if ($product->seller && $product->seller->image && !str_starts_with($product->seller->image, 'http')) {
+                $product->seller->image = url('storage/' . $product->seller->image);
+            }
+
+            // Menambahkan URL lengkap untuk gambar kategori
+            if ($product->category && $product->category->image && !str_starts_with($product->category->image, 'http')) {
+                $product->category->image = url('storage/' . $product->category->image);
+            }
+
+            // Tambahkan average_rating (rata-rata dari relasi reviews)
+            $product->average_rating = round($product->reviews()->avg('rating') ?? 0, 2);
+
+            return $product;
+        });
+
+    return response()->json([
+        'status' => true,
+        'data' => $products
+    ]);
+}
+
 
 
     // Menampilkan produk berdasarkan categoryId
