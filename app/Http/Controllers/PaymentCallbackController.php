@@ -230,10 +230,10 @@ class PaymentCallbackController extends Controller
             Log::error('Callback processing error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'request_data' => $request->all()
-            ]);
+            ]);                                                                                     
             
             // Tetap return 200 agar Midtrans tidak retry terus
-            return response('Error processed', 200);
+            return response('Error processed', 200);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
         }
     }
-}
+}                                                                                                                                                                                                                                   

@@ -197,6 +197,19 @@ private function calculateSellerTotalAmount($sellerItems)
 
 private function processPayment($paymentType, $totalAmount, $orderId, $bank = null)
 {
+    // Set Midtrans Configuration
+    \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');
+    \Midtrans\Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+    \Midtrans\Config::$isSanitized = env('MIDTRANS_IS_SANITIZED', true);
+    \Midtrans\Config::$is3ds = env('MIDTRANS_IS_3DS', true);
+
+    // Log untuk debugging
+    Log::info('Midtrans Config Check', [
+        'server_key_exists' => !empty(env('MIDTRANS_SERVER_KEY')),
+        'server_key_length' => strlen(env('MIDTRANS_SERVER_KEY')),
+        'is_production' => env('MIDTRANS_IS_PRODUCTION', false)
+    ]);
+
     $transaction_details = [
         'order_id' => $orderId,
         'gross_amount' => $totalAmount,
@@ -254,7 +267,7 @@ private function processPayment($paymentType, $totalAmount, $orderId, $bank = nu
     }
 
     try {
-        $response = CoreApi::charge($transaction_data);
+        $response = \Midtrans\CoreApi::charge($transaction_data);
 
         $result = [
             'response' => $response,
