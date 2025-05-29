@@ -54,8 +54,9 @@ class ProductController extends Controller
 
 
     // Menampilkan produk berdasarkan categoryId
-    public function getProductsByCategory($categoryId)
-    {
+    // Menampilkan produk berdasarkan categoryId
+public function getProductsByCategory($categoryId)
+{
     // Validasi apakah categoryId ada di database
     $category = Category::find($categoryId);
 
@@ -85,6 +86,9 @@ class ProductController extends Controller
                 $product->category->image = $product->category->image ? url('storage/' . $product->category->image) : null;
             }
 
+            // Tambahkan average_rating (rata-rata dari relasi reviews)
+            $product->average_rating = $product->reviews()->avg('rating');
+
             return $product;
         });
 
@@ -93,6 +97,7 @@ class ProductController extends Controller
         'data' => $products
     ]);
 }
+
 
 
     //menampilkan produk seller login saja
