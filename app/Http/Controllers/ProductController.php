@@ -87,7 +87,7 @@ public function getProductsByCategory($categoryId)
             }
 
             // Tambahkan average_rating (rata-rata dari relasi reviews)
-            $product->average_rating = $product->reviews()->avg('rating');
+            $product->average_rating = round($product->reviews()->avg('rating'), 2);
 
             return $product;
         });
