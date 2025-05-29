@@ -15,8 +15,7 @@ class ProductController extends Controller
    // Menampilkan semua produk yang is_active = true
    public function index()
 {
-    $products = Product::where('is_active', true) // Hanya produk aktif
-        ->with(['seller', 'category'])
+    $products = Product::with(['seller', 'category', 'reviews']) // Tambah relasi reviews
         ->get()
         ->map(function ($product) {
             // Menambahkan URL lengkap untuk gambar produk
@@ -35,16 +34,23 @@ class ProductController extends Controller
             }
 
             // Tambahkan average_rating (rata-rata dari relasi reviews)
-            $product->average_rating = round($product->reviews()->avg('rating') ?? 0, 2);
+            $product->average_rating = round($product->reviews->avg('rating') ?? 0, 2);
 
             return $product;
         });
 
+    // Urutkan berdasarkan rating tertinggi, lalu seller aktif di atas
+    $sorted = $products->sortByDesc('average_rating')
+        ->sortBy(function ($product) {
+            return $product->seller?->is_active == 1 ? 0 : 1; // aktif = 0 (atas), nonaktif = 1 (bawah)
+        })->values(); // reset index agar jadi array terurut rapi
+
     return response()->json([
         'status' => true,
-        'data' => $products
+        'data' => $sorted
     ]);
 }
+
 
 
 
