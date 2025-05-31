@@ -15,4 +15,10 @@ class CartItem extends Model
     {
         return $this->belongsTo(Product::class);
     }
+    // App\Models\CartItem.php
+public function cart()
+{
+    return $this->belongsTo(Cart::class);
+}
+
 }
