@@ -57,7 +57,8 @@ Route::post('payment/callback', [PaymentCallbackController::class, 'handle']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::put('/update', [AuthController::class, 'update']);
-    
+    Route::put('/cart/items/{id}/notes', [CartController::class, 'updateCartItemNotes']);
+
 
     Route::get('/categories', [CategoryController::class, 'index']); // Menampilkan semua kategori
     Route::get('/products', [ProductController::class, 'index']); // Menampilkan semua produk
@@ -125,7 +126,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/cart', [CartController::class, 'addToCart']); // Menambahkan item ke keranjang
         Route::put('/cart/items/{id}', [CartController::class, 'updateCartItem']); // Mengupdate jumlah item dalam keranjang
         Route::delete('/cart/items/{id}', [CartController::class, 'removeCartItem']); // Menghapus item dari keranjang
-        Route::put('/cart/items/{id}/notes', [CartController::class, 'updateCartItemNotes']);
 
         Route::post('/order', [OrderController::class, 'createOrder']);
         Route::get('/order', [OrderController::class, 'getUserOrders']);
