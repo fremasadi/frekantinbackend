@@ -50,6 +50,7 @@ Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::post('payment/callback', [PaymentCallbackController::class, 'handle']);
 // Route::post('/payment/manual-update', [PaymentCallbackController::class, 'manualUpdate']);
+Route::put('/cart/items/{id}/notes', [CartController::class, 'updateCartItemNotes']);
 
 
 
@@ -57,7 +58,6 @@ Route::post('payment/callback', [PaymentCallbackController::class, 'handle']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::put('/update', [AuthController::class, 'update']);
-    Route::put('/cart/items/{id}/notes', [CartController::class, 'updateCartItemNotes']);
 
 
     Route::get('/categories', [CategoryController::class, 'index']); // Menampilkan semua kategori
