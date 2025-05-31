@@ -190,12 +190,6 @@ class CartController extends Controller
 
     $cartItem = CartItem::with('cart')->findOrFail($id);
 
-    if (!$cartItem->cart || $cartItem->cart->customer_id !== Auth::id()) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Unauthorized'
-        ], 403);
-    }
 
     $cartItem->update(['notes' => $request->notes]);
 
