@@ -175,38 +175,37 @@ class CartController extends Controller
 
     // Mengupdate catatan (notes) dari item keranjang
     public function updateCartItemNotes(Request $request, $id)
-    {
-        $validator = Validator::make($request->all(), [
-            'notes' => 'nullable|string|max:1000'
-        ]);
-    
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validation Error',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-    
-        $cartItem = CartItem::findOrFail($id);
-    
-        // Pastikan item milik user yang sedang login
-        $cart = Cart::find($cartItem->cart_id);
-        if (!$cart || $cart->customer_id !== Auth::id()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Unauthorized'
-            ], 403);
-        }
-    
-        $cartItem->update(['notes' => $request->notes]);
-    
+{
+    $validator = Validator::make($request->all(), [
+        'notes' => 'nullable|string|max:1000'
+    ]);
+
+    if ($validator->fails()) {
         return response()->json([
-            'status' => true,
-            'message' => 'Cart item notes updated successfully',
-            'data' => $cartItem
-        ]);
+            'status' => false,
+            'message' => 'Validation Error',
+            'errors' => $validator->errors()
+        ], 422);
     }
+
+    $cartItem = CartItem::with('cart')->findOrFail($id);
+
+    if (!$cartItem->cart || $cartItem->cart->customer_id !== Auth::id()) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Unauthorized'
+        ], 403);
+    }
+
+    $cartItem->update(['notes' => $request->notes]);
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Cart item notes updated successfully',
+        'data' => $cartItem
+    ]);
+}
+
     
 
 }
