@@ -125,7 +125,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/cart', [CartController::class, 'addToCart']); // Menambahkan item ke keranjang
         Route::put('/cart/items/{id}', [CartController::class, 'updateCartItem']); // Mengupdate jumlah item dalam keranjang
         Route::delete('/cart/items/{id}', [CartController::class, 'removeCartItem']); // Menghapus item dari keranjang
-        Route::patch('/cart/items/{id}/notes', [CartController::class, 'updateCartItemNotes']);
+        Route::put('/cart/items/{id}/notes', [CartController::class, 'updateCartItemNotes']);
 
         Route::post('/order', [OrderController::class, 'createOrder']);
         Route::get('/order', [OrderController::class, 'getUserOrders']);
