@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\SellerEarning; // ⬅️ Tambahkan baris ini
 use App\Models\Order;
+use Carbon\Carbon;
 
 class SellerEarningController extends Controller
 {
