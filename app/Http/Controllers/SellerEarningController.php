@@ -24,13 +24,13 @@ class SellerEarningController extends Controller
 {
     $earning = SellerEarning::findOrFail($id);
 
-    // Ambil bulan dan tahun dari field `month`
-    $month = \Carbon\Carbon::parse($earning->month)->format('m');
-    $year = \Carbon\Carbon::parse($earning->month)->format('Y');
+    $month = Carbon::parse($earning->month)->format('m');
+    $year = Carbon::parse($earning->month)->format('Y');
 
     $orders = Order::where('seller_id', $earning->seller_id)
         ->whereMonth('created_at', $month)
         ->whereYear('created_at', $year)
+        ->where('order_status', 'COMPLETED')
         ->get();
 
     return response()->json([
