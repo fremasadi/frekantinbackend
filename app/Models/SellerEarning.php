@@ -41,4 +41,13 @@ class SellerEarning extends Model
     {
         return $query->where('status', 'paid');
     }
+
+    // App\Models\SellerEarning.php
+public function orders()
+{
+    return $this->hasMany(\App\Models\Order::class, 'seller_id', 'seller_id')
+        ->whereMonth('created_at', '=', $this->month->format('m'))
+        ->whereYear('created_at', '=', $this->month->format('Y'));
+}
+
 }
